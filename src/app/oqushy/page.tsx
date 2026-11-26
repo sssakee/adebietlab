@@ -8,6 +8,7 @@ import { DAILY_GOAL, discoveries, streak, studentAssignments, todayCount } from 
 import { Mascot } from "@/components/Mascot";
 import { Ornament } from "@/components/Ornament";
 import { Ring } from "@/components/Ring";
+import { Quote } from "@/components/Quote";
 
 export const metadata = { title: "Басты бет" };
 
@@ -88,6 +89,8 @@ export default async function StudentHome() {
           </div>
           <ToolGrid />
         </section>
+
+        <Quote />
       </div>
 
       <div className="flex flex-col gap-6">

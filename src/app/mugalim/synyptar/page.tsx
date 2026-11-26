@@ -3,6 +3,7 @@ import { sql } from "@/lib/db";
 import { levelFor } from "@/lib/grading";
 import { teacherClasses } from "@/lib/teacher";
 import { NewClassForm } from "./NewClassForm";
+import { PageHead } from "@/components/PageHead";
 
 export const metadata = { title: "Сыныптарым" };
 
@@ -14,10 +15,7 @@ export default async function Classes() {
     join classes c on c.id = m.class_id where c.teacher_id = ${u.id} order by p.full_name`;
   return (
     <div className="flex flex-col gap-6">
-      <header className="card">
-        <h1 className="text-3xl font-bold">Сыныптарым</h1>
-        <p className="mt-1 text-muted">Оқушылар сынып кодымен, атымен және өз PIN-імен қосылады. Телефон, мекенжай сұралмайды.</p>
-      </header>
+      <PageHead lines={["Сынып аш.", "Код бер.", "Бірге зертте."]} sub="Оқушылар сынып кодымен, атымен және PIN-мен қосылады." />
       <NewClassForm />
       {list.map((c) => {
         const ss = students.filter((s) => s.class_id === c.id);

@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { STATUS, studentAssignments, TOOL_LABEL } from "@/lib/queries";
 import { AI_MODE_LABEL } from "@/lib/ai/prompts/chat";
 import { Muiz } from "@/components/Ornament";
+import { PageHead } from "@/components/PageHead";
 
 export const metadata = { title: "Тапсырмаларым" };
 
@@ -11,10 +12,7 @@ export default async function MyTasks() {
   const list = await studentAssignments(u.id, u.class_id);
   return (
     <div className="flex flex-col gap-6">
-      <header className="card">
-        <h1 className="text-3xl font-bold">Тапсырмаларым</h1>
-        <p className="mt-1 text-muted">Мұғалім берген жұмыстар, мерзімі мен нәтижесі.</p>
-      </header>
+      <PageHead lines={["Оқы.", "Орында.", "Тексер."]} sub="Мұғалім берген жұмыстар мен нәтижелер." />
       {list.length ? (
         <ul className="flex flex-col gap-4">
           {list.map((a) => (

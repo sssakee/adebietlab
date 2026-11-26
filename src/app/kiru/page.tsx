@@ -5,6 +5,7 @@ import { Logo } from "@/components/Logo";
 import { Mascot } from "@/components/Mascot";
 import { Ornament } from "@/components/Ornament";
 import { StudentForm, TeacherForm } from "./Forms";
+import { Quote } from "@/components/Quote";
 
 export const metadata: Metadata = { title: "Кіру" };
 
@@ -36,6 +37,7 @@ export default async function LoginPage() {
           <TeacherForm />
         </section>
       </div>
+      <Quote />
       <p className="text-center text-sm text-muted">
         Демо: мұғалім — demo@adebietlab.kz / demo1234 · оқушы — LAB7QA, Айару, PIN 1234
       </p>

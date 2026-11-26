@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { Muiz } from "@/components/Ornament";
+import { PageHead } from "@/components/PageHead";
 
 export const metadata = { title: "Тапсырмалар банкі" };
 
@@ -15,13 +16,9 @@ export default async function Bank() {
     where ts.teacher_id = ${u.id} order by ts.created_at desc`;
   return (
     <div className="flex flex-col gap-6">
-      <header className="card flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Тапсырмалар банкі</h1>
-          <p className="mt-1 text-muted">Жасалған жинақтар. Бекітілгенін кез келген сыныпқа қайта беруге болады.</p>
-        </div>
-        <Link href="/mugalim/zhasau" className="btn-primary">Жаңа жинақ</Link>
-      </header>
+      <PageHead lines={["Жина.", "Сақта.", "Қайта қолдан."]} sub="Бекітілген жинақты кез келген сыныпқа беруге болады.">
+        <Link href="/mugalim/zhasau" className="btn-gold">Жаңа жинақ</Link>
+      </PageHead>
       {sets.length ? (
         <ul className="grid gap-4 lg:grid-cols-2">
           {sets.map((s) => (

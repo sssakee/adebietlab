@@ -3,6 +3,7 @@ import { BookOpen, Search } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import type { Work } from "@/lib/queries";
+import { PageHead } from "@/components/PageHead";
 
 export const metadata = { title: "Шығармалар" };
 
@@ -25,10 +26,9 @@ export default async function Library({ searchParams }: PageProps<"/oqushy/shyga
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="card">
-        <h1 className="text-3xl font-bold">Шығармалар кітапханасы</h1>
-        <p className="mt-1 text-muted">Мектепте оқылатын шығармалар. Сынып, жанр бойынша сүз немесе ізде.</p>
-        <form className="mt-5 grid gap-3 md:grid-cols-[1fr_160px_220px_auto]" role="search">
+      <PageHead lines={["Оқы.", "Таны.", "Талда."]} sub="5–11 сыныпта оқылатын шығармалар." />
+      <section className="card" aria-label="Іздеу және сүзгі">
+        <form className="grid gap-3 md:grid-cols-[1fr_160px_220px_auto]" role="search">
           <div className="relative">
             <label htmlFor="lq" className="sr-only">Іздеу</label>
             <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted" aria-hidden="true" />
@@ -54,7 +54,7 @@ export default async function Library({ searchParams }: PageProps<"/oqushy/shyga
           </div>
           <button className="btn-primary">Сүзу</button>
         </form>
-      </header>
+      </section>
 
       {works.length ? (
         <ul className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
