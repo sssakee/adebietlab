@@ -51,12 +51,14 @@ export default async function Results({ searchParams }: PageProps<"/mugalim/nati
 }
 
 async function TaskTable({ a, classId }: { a: { id: string; set_id: string }; classId: string }) {
-  const tasks = await sql<{ id: string; type: string; points: number; prompt: string }[]>`select id, type, points, prompt from tasks where set_id = ${a.set_id} order by position`;
-  const rows = await sql<Row[]>`
+  const [tasks, rows] = await Promise.all([
+    sql<{ id: string; type: string; points: number; prompt: string }[]>`select id, type, points, prompt from tasks where set_id = ${a.set_id} order by position`,
+    sql<Row[]>`
     select p.id as student_id, p.full_name, s.id as sub_id, s.status, s.used_ai_hint, (s.auto_scores || s.teacher_scores) as scores
     from class_members m join profiles p on p.id = m.student_id
     left join submissions s on s.assignment_id = ${a.id} and s.student_id = p.id
-    where m.class_id = ${classId} order by p.full_name`;
+    where m.class_id = ${classId} order by p.full_name`,
+  ]);
   const max = tasks.reduce((s, t) => s + t.points, 0);
   const wrong = tasks
     .map((t) => ({ t, n: rows.filter((r) => r.scores && t.id in r.scores && r.scores[t.id] < t.points).length }))
@@ -65,7 +67,7 @@ async function TaskTable({ a, classId }: { a: { id: string; set_id: string }; cl
     .slice(0, 3);
   return (
     <div className="flex flex-col gap-6">
-      <section className="card overflow-x-auto" aria-labelledby="tbl">
+      <section className="card relative overflow-x-auto" aria-labelledby="tbl">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 id="tbl" className="text-xl font-bold">Оқушы × тапсырма</h2>
           <a href={`/mugalim/natizheler/csv?a=${a.id}`} className="btn-ghost" download>
@@ -139,7 +141,7 @@ async function LabTable({ a, classId }: { a: { work_id: string; lab_tools: strin
       (select result from lab_works where student_id = p.id and work_id = ${a.work_id} and kind = 'zheli') as zheli
     from class_members m join profiles p on p.id = m.student_id where m.class_id = ${classId} order by p.full_name`;
   return (
-    <section className="card overflow-x-auto">
+    <section className="card relative overflow-x-auto">
       <table className="w-full min-w-[480px] text-left text-sm">
         <thead className="text-muted">
           <tr>

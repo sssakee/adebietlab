@@ -18,7 +18,7 @@ export default async function LoginPage() {
       <section className="relative overflow-hidden rounded-[32px] bg-navy px-6 pb-12 pt-8 text-white sm:px-10">
         <div className="relative z-10 max-w-xl">
           <h1 className="text-3xl font-bold leading-tight sm:text-5xl">
-            Әдебиетті зертте. <span className="text-gold">Мағынаны аш.</span> Ойыңды дамыт.
+            Шығарманы оқып қана қоймай, <span className="text-gold">зерттейтін</span> орын
           </h1>
           <p className="mt-4 text-lg text-white/85">5–11 сынып оқушылары мен қазақ әдебиеті мұғалімдеріне арналған зертхана.</p>
         </div>

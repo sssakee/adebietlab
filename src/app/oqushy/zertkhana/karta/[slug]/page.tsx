@@ -48,19 +48,21 @@ export default async function KartaPage({ params }: PageProps<"/oqushy/zertkhana
   const chars = w.lab.characters;
   const byId = Object.fromEntries(chars.map((c) => [c.id, c]));
 
-  const [mine] = await sql<{ data: { edges?: Edge[] } }[]>`select data from lab_works where student_id = ${u.id} and work_id = ${w.id} and kind = 'char_map'`;
-  const edges = mine?.data.edges ?? [];
-  const cmp = compareMap(w.lab.reference, edges);
-  const [egerde] = await sql<{ data: { prediction: string; evidence: string; checklist: boolean[] }; teacher_scores: number[] | null }[]>`
-    select data, teacher_scores from lab_works where student_id = ${u.id} and work_id = ${w.id} and kind = 'egerde'`;
-  const peers = await sql<{ id: string; full_name: string; prediction: string; votes: number; mine: boolean }[]>`
+  const [[mine], [egerde], peers] = await Promise.all([
+    sql<{ data: { edges?: Edge[] } }[]>`select data from lab_works where student_id = ${u.id} and work_id = ${w.id} and kind = 'char_map'`,
+    sql<{ data: { prediction: string; evidence: string; checklist: boolean[] }; teacher_scores: number[] | null }[]>`
+    select data, teacher_scores from lab_works where student_id = ${u.id} and work_id = ${w.id} and kind = 'egerde'`,
+    sql<{ id: string; full_name: string; prediction: string; votes: number; mine: boolean }[]>`
     select l.id, p.full_name, l.data->>'prediction' as prediction,
       (select count(*)::int from lab_votes v where v.lab_work_id = l.id) as votes,
       exists (select 1 from lab_votes v where v.lab_work_id = l.id and v.student_id = ${u.id}) as mine
     from lab_works l join profiles p on p.id = l.student_id
     join class_members m on m.student_id = l.student_id and m.class_id = ${u.class_id}
     where l.work_id = ${w.id} and l.kind = 'egerde' and l.shared and l.student_id <> ${u.id}
-    order by votes desc, l.updated_at desc limit 10`;
+    order by votes desc, l.updated_at desc limit 10`,
+  ]);
+  const edges = mine?.data.edges ?? [];
+  const cmp = compareMap(w.lab.reference, edges);
 
   const refLabel = (e: Edge) => w.lab.reference!.find((r) => [r.from, r.to].sort().join() === [e.from, e.to].sort().join())?.label;
 
@@ -74,8 +76,8 @@ export default async function KartaPage({ params }: PageProps<"/oqushy/zertkhana
         </nav>
       </LabHeader>
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
-        <section id="map" className="card h-fit scroll-mt-6" aria-labelledby="map-h">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <section id="map" className="card h-fit min-w-0 scroll-mt-6" aria-labelledby="map-h">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 id="map-h" className="text-2xl font-bold">Кейіпкер картасы</h2>
             <p className="num font-bold text-violet" aria-live="polite">
@@ -85,7 +87,7 @@ export default async function KartaPage({ params }: PageProps<"/oqushy/zertkhana
           </div>
           <p className="mt-2 text-sm font-medium text-muted">Кейіпкерлерді байланыстыр, әр байланысқа жырдан дәлел жаз. Үзік сызықтар — әлі анықталмаған байланыстар.</p>
 
-          <div className="mt-5 overflow-x-auto rounded-3xl bg-[#f5f3ff] p-3">
+          <div className="relative mt-5 overflow-x-auto rounded-3xl bg-[#f5f3ff] p-3">
             <svg viewBox={`0 0 ${W} ${H}`} className="min-w-[520px]" role="img" aria-label={`Кейіпкер картасы, табылған байланыс: ${cmp.found} / ${cmp.total}`}>
               {cmp.missing.map((e) => (
                 <Line key={`m${e.from}${e.to}`} a={byId[e.from]} b={byId[e.to]} dashed color="#d2553a" q />

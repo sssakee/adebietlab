@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: { default: "ӘдебиетLab", template: "%s · ӘдебиетLab" },
-  description: "Әдебиетті зертте. Мағынаны аш. Ойыңды дамыт.",
+  description: "5–11 сынып оқушылары мен қазақ әдебиеті мұғалімдеріне арналған зертхана: өлең өлшегіш, кейіпкер картасы, оқиға желісі және ЖИ көмекшісі.",
 };
 
 export const viewport: Viewport = { themeColor: "#1a4f9e" };

@@ -51,7 +51,7 @@ export default async function StudentHome() {
             <h1 id="hello" className="mt-4 text-4xl font-bold sm:text-5xl">
               Сәлем, <span className="text-gold">{u.full_name}!</span>
             </h1>
-            <p className="mt-4 text-lg font-medium text-white/90">Әдебиетті зертте. Мағынаны аш. Ойыңды дамыт.</p>
+            <p className="mt-4 text-lg font-medium text-white/90">Өлеңнің буынын санап, кейіпкерлердің байланысын тауып, жырдың оқиға желісін ретке қой.</p>
             <Link href="/oqushy/zertkhana" className="btn-gold mt-7 h-14 px-8 text-lg">
               Зертханаға кіру <ArrowRight className="size-5" aria-hidden="true" />
             </Link>

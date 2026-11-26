@@ -147,7 +147,7 @@ const cases: Case[] = [
 ];
 
 async function main() {
-  const provider = isMock() ? "AI_MOCK (ережемен)" : `${process.env.AI_PROVIDER} / ${process.env.AI_MODEL}`;
+  const provider = isMock() ? "AI_MOCK (ережемен)" : `${process.env.AI_PROVIDER?.trim()} / ${process.env.AI_MODEL?.trim()}`;
   const rows: string[] = [];
   for (const [i, c] of cases.entries()) {
     let r: { actual: string; pass: boolean | null };

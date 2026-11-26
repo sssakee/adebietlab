@@ -23,10 +23,11 @@ export default async function TeacherHome({ searchParams }: PageProps<"/mugalim"
       </div>
     );
 
-  const works = await sql<{ id: string; title: string; author: string; lab: Record<string, unknown> }[]>`
-    select id, title, author, lab from works where lab <> '{}' order by title`;
-
-  const [stats] = await sql<{ active: number; map_avg: number | null; map_total: number | null; olen_ok: number | null; pending: number }[]>`
+  // independent of each other: one round-trip of latency instead of four
+  const [works, [stats], struggles, egerde] = await Promise.all([
+    sql<{ id: string; title: string; author: string; lab: Record<string, unknown> }[]>`
+    select id, title, author, lab from works where lab <> '{}' order by title`,
+    sql<{ active: number; map_avg: number | null; map_total: number | null; olen_ok: number | null; pending: number }[]>`
     with m as (select student_id from class_members where class_id = ${cls.id})
     select
       (select count(distinct x.s)::int from (
@@ -36,10 +37,8 @@ export default async function TeacherHome({ searchParams }: PageProps<"/mugalim"
       (select round(avg((result->>'found')::numeric), 1)::float from lab_works where kind = 'char_map' and student_id in (select * from m)) as map_avg,
       (select max((result->>'total')::int) from lab_works where kind = 'char_map' and student_id in (select * from m)) as map_total,
       (select round(100.0 * avg(((result->>'meter_ok')::boolean and (result->>'rhyme_ok')::boolean)::int))::int from lab_works where kind = 'olen' and student_id in (select * from m)) as olen_ok,
-      (select count(*)::int from lab_works where kind = 'egerde' and shared and teacher_scores is null and student_id in (select * from m)) as pending`;
-
-  // "Where the class struggles": wrong rhyme answers, missing map links, most-missed tasks.
-  const struggles = await sql<{ text: string; n: number; tool: string; tone: string }[]>`
+      (select count(*)::int from lab_works where kind = 'egerde' and shared and teacher_scores is null and student_id in (select * from m)) as pending`,
+    sql<{ text: string; n: number; tool: string; tone: string }[]>`
     with m as (select student_id from class_members where class_id = ${cls.id})
     (select 'Ұйқасты ' || (data->>'rhyme') || ' деп шатастырады' as text, count(*)::int n, 'Өлең өлшегіш' tool, 'red' tone
       from lab_works where kind = 'olen' and not (result->>'rhyme_ok')::boolean and student_id in (select * from m) group by data->>'rhyme')
@@ -56,7 +55,20 @@ export default async function TeacherHome({ searchParams }: PageProps<"/mugalim"
       from submissions s join assignments a on a.id = s.assignment_id join tasks t on t.set_id = a.set_id
       where a.class_id = ${cls.id} and t.type <> 'open' and coalesce((s.auto_scores->>t.id::text)::int, 0) < t.points
       group by t.id, t.prompt)
-    order by n desc limit 4`;
+    order by n desc limit 4`,
+    sql<{ id: string; full_name: string; prediction: string; evidence: string; votes: number; teacher_scores: number[] | null }[]>`
+    select l.id, p.full_name, l.data->>'prediction' as prediction, l.data->>'evidence' as evidence, l.teacher_scores,
+      (select count(*)::int from lab_votes v where v.lab_work_id = l.id) as votes
+    from lab_works l join profiles p on p.id = l.student_id join class_members m on m.student_id = l.student_id
+    where m.class_id = ${cls.id} and l.kind = 'egerde' and l.shared
+    order by (l.teacher_scores is null) desc, l.updated_at desc`,
+  ]);
+
+
+
+
+  // "Where the class struggles": wrong rhyme answers, missing map links, most-missed tasks.
+
   const charName = new Map<string, string>();
   for (const w of works) for (const c of (w.lab.characters as Character[] | undefined) ?? []) charName.set(c.id, c.name);
   const edgeText = (key: string) => {
@@ -64,12 +76,7 @@ export default async function TeacherHome({ searchParams }: PageProps<"/mugalim"
     return charName.has(a) ? `${charName.get(a)} мен ${charName.get(b)} байланысын таппаған` : key;
   };
 
-  const egerde = await sql<{ id: string; full_name: string; prediction: string; evidence: string; votes: number; teacher_scores: number[] | null }[]>`
-    select l.id, p.full_name, l.data->>'prediction' as prediction, l.data->>'evidence' as evidence, l.teacher_scores,
-      (select count(*)::int from lab_votes v where v.lab_work_id = l.id) as votes
-    from lab_works l join profiles p on p.id = l.student_id join class_members m on m.student_id = l.student_id
-    where m.class_id = ${cls.id} and l.kind = 'egerde' and l.shared
-    order by (l.teacher_scores is null) desc, l.updated_at desc`;
+
   const g = egerde.find((e) => e.id === sp.g) ?? egerde.find((e) => !e.teacher_scores) ?? egerde[0];
   const tone: Record<string, string> = { red: "bg-red-soft text-red-ink", gold: "bg-gold-soft text-ink", blue: "bg-soft text-ink" };
 

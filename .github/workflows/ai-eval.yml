@@ -1,0 +1,29 @@
+# Runs the 12 AI test cases against the real model and commits docs/ai-eval-results.md.
+# The key lives only in GitHub: Settings → Secrets and variables → Actions → AI_API_KEY.
+name: ЖИ тесті
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - name: Кілт бар ма
+        run: test -n "$KEY" || { echo "AI_API_KEY құпиясы қойылмаған"; exit 1; }
+        env: { KEY: "${{ secrets.AI_API_KEY }}" }
+      - run: npm ci
+      - run: npm run ai:eval
+        env:
+          AI_PROVIDER: gemini
+          AI_MODEL: gemini-flash-latest
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+      - name: Нәтижені сақтау
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/ai-eval-results.md
+          git diff --cached --quiet || git commit -m "ЖИ тест нәтижелері (шын модель)"
+          git push

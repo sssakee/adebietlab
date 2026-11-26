@@ -1,6 +1,6 @@
 import { FlaskConical } from "lucide-react";
 
-export function Logo({ subtitle = "Зертте · Аш · Дамыт" }: { subtitle?: string }) {
+export function Logo({ subtitle = "Қазақ әдебиеті зертханасы" }: { subtitle?: string }) {
   return (
     <div className="flex items-center gap-3">
       <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary text-white shadow-[0_6px_16px_-6px_#1d6fe0]">

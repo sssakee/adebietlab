@@ -16,7 +16,7 @@ export default async function Bank() {
     where ts.teacher_id = ${u.id} order by ts.created_at desc`;
   return (
     <div className="flex flex-col gap-6">
-      <PageHead lines={["Жина.", "Сақта.", "Қайта қолдан."]} sub="Бекітілген жинақты кез келген сыныпқа беруге болады.">
+      <PageHead title="Тапсырмалар банкі" sub="Бекітілген жинақты кез келген сыныпқа беруге болады." stats={[["Жинақ", sets.length], ["Бекітілген", sets.filter((s) => s.status === "approved").length], ["Тапсырма", sets.reduce((n, s) => n + s.n, 0)]]}>
         <Link href="/mugalim/zhasau" className="btn-gold">Жаңа жинақ</Link>
       </PageHead>
       {sets.length ? (

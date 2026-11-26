@@ -15,7 +15,7 @@ export default async function Classes() {
     join classes c on c.id = m.class_id where c.teacher_id = ${u.id} order by p.full_name`;
   return (
     <div className="flex flex-col gap-6">
-      <PageHead lines={["Сынып аш.", "Код бер.", "Бірге зертте."]} sub="Оқушылар сынып кодымен, атымен және PIN-мен қосылады." />
+      <PageHead title="Сыныптарым" sub="Оқушылар сынып кодымен, атымен және PIN-мен қосылады." stats={[["Сынып", list.length], ["Оқушы", students.length]]} />
       <NewClassForm />
       {list.map((c) => {
         const ss = students.filter((s) => s.class_id === c.id);

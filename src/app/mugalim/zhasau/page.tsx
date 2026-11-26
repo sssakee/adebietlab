@@ -4,6 +4,7 @@ import { isMock } from "@/lib/ai";
 import { GenForm } from "./GenForm";
 import { NewMethodForm } from "./NewMethodForm";
 import { PageHead } from "@/components/PageHead";
+import { QUOTES } from "@/lib/quotes";
 
 export const metadata = { title: "Тапсырма жасау" };
 
@@ -15,7 +16,7 @@ export default async function Generate() {
   const works = await sql<{ id: string; label: string }[]>`select id, '«' || title || '» — ' || author as label from works order by author, title`;
   return (
     <div className="flex flex-col gap-6">
-      <PageHead lines={["Әдіс таңда.", "Материал бер.", "Тексеріп бекіт."]} sub="ЖИ тек сіздің материалға сүйенеді. Бекітпейінше оқушы ештеңе көрмейді." />
+      <PageHead title="Тапсырма жасау" sub="ЖИ тек сіздің материалға сүйенеді. Бекітпейінше оқушы ештеңе көрмейді." quote={QUOTES.ulgi} />
       {isMock() && <p className="rounded-2xl bg-gold-soft p-3 text-sm font-bold">Демо режим (AI_MOCK): тапсырмалар ЖИ-сіз, ережемен жасалады. Нақты ЖИ үшін .env файлына кілт қойыңыз.</p>}
       <GenForm methods={methods} works={works} />
       <NewMethodForm />

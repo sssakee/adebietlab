@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import type { Work } from "@/lib/queries";
 import { PageHead } from "@/components/PageHead";
+import { QUOTES } from "@/lib/quotes";
 
 export const metadata = { title: "Шығармалар" };
 
@@ -26,7 +27,7 @@ export default async function Library({ searchParams }: PageProps<"/oqushy/shyga
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHead lines={["Оқы.", "Таны.", "Талда."]} sub="5–11 сыныпта оқылатын шығармалар." />
+      <PageHead title="Шығармалар" sub="5–11 сыныпта оқылатын шығармалар." quote={QUOTES.oqu} />
       <section className="card" aria-label="Іздеу және сүзгі">
         <form className="grid gap-3 md:grid-cols-[1fr_160px_220px_auto]" role="search">
           <div className="relative">

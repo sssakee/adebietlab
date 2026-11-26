@@ -77,7 +77,16 @@ export async function gradeEgerde(labWorkId: string, classId: string, f: FormDat
 
 // ---------- task generation ----------
 
-export type GenState = { error?: string } | undefined;
+export type GenState = { error?: string; values?: Record<string, string> } | undefined;
+const keep = (f: FormData, keys: string[]) => Object.fromEntries(keys.map((k) => [k, str(f, k)]));
+const GEN_FIELDS = ["text", "work_id", "method_id", "title", "objective", "grade", "level", "count"];
+
+// React 19 resets the form after an action, so a failed attempt hands the fields back;
+// otherwise a teacher would lose a long pasted text to one AI timeout.
+export async function generateTasks(s: GenState, f: FormData): Promise<GenState> {
+  const r = await generate(s, f);
+  return r && { ...r, values: keep(f, GEN_FIELDS) };
+}
 
 async function materialFrom(f: FormData): Promise<{ text: string; title: string; workId: string | null }> {
   const file = f.get("file");
@@ -99,7 +108,7 @@ async function materialFrom(f: FormData): Promise<{ text: string; title: string;
   throw new AiError("Материал беріңіз: файл жүктеңіз, мәтін қойыңыз немесе шығарма таңдаңыз.");
 }
 
-export async function generateTasks(_: GenState, f: FormData): Promise<GenState> {
+async function generate(_: GenState, f: FormData): Promise<GenState> {
   const u = await requireRole("teacher");
   const [method] = await sql<{ id: string; slug: string; name: string; description: string; instructions: string; example: string }[]>`
     select * from methods where id = ${str(f, "method_id")} and (owner_id is null or owner_id = ${u.id})`;
@@ -146,7 +155,7 @@ export async function createMethod(_: unknown, f: FormData) {
   const name = str(f, "name").slice(0, 80);
   const description = str(f, "description").slice(0, 300);
   const example = str(f, "example").slice(0, 1000);
-  if (name.length < 3 || description.length < 10) return { error: "Атауын және сипаттамасын толық жазыңыз." };
+  if (name.length < 3 || description.length < 10) return { error: "Атауын және сипаттамасын толық жазыңыз.", values: keep(f, ["name", "description", "example"]) };
   await sql`insert into methods (slug, name, description, instructions, example, owner_id)
     values (${"own-" + crypto.randomUUID().slice(0, 8)}, ${name}, ${description}, ${description}, ${example}, ${u.id})`;
   revalidatePath("/mugalim/zhasau");
@@ -154,6 +163,8 @@ export async function createMethod(_: unknown, f: FormData) {
 }
 
 // ---------- review & approve ----------
+
+const TASK_KEYS = ["type", "prompt", "options", "answer_key", "criteria", "points", "source_ref"];
 
 /** Edit form posts the whole task; options one per line; answer key as JSON. */
 export async function updateTask(setId: string, taskId: string, _: unknown, f: FormData) {
@@ -163,7 +174,7 @@ export async function updateTask(setId: string, taskId: string, _: unknown, f: F
   try {
     answerKey = JSON.parse(str(f, "answer_key") || "null");
   } catch {
-    return { error: "Дұрыс жауап JSON пішімінде болуы керек, мысалы 1 немесе [\"сөз\"]." };
+    return { error: "Дұрыс жауап JSON пішімінде болуы керек, мысалы 1 немесе [\"сөз\"].", values: keep(f, TASK_KEYS) };
   }
   const parsed = TaskSchema.safeParse({
     type: str(f, "type"),
@@ -174,7 +185,7 @@ export async function updateTask(setId: string, taskId: string, _: unknown, f: F
     points: Number(f.get("points")),
     source_ref: str(f, "source_ref"),
   });
-  if (!parsed.success) return { error: parsed.error.issues.map((i) => i.message).join("; ") };
+  if (!parsed.success) return { error: parsed.error.issues.map((i) => i.message).join("; "), values: keep(f, TASK_KEYS) };
   const t: Task = parsed.data;
   await sql`update tasks set type = ${t.type}, prompt = ${t.prompt}, options = ${sql.json(t.options)}, answer_key = ${sql.json(t.answer_key)},
     criteria = ${t.criteria}, points = ${t.points}, source_ref = ${t.source_ref}

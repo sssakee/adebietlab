@@ -4,6 +4,7 @@ import { STATUS, studentAssignments, TOOL_LABEL } from "@/lib/queries";
 import { AI_MODE_LABEL } from "@/lib/ai/prompts/chat";
 import { Muiz } from "@/components/Ornament";
 import { PageHead } from "@/components/PageHead";
+import { QUOTES } from "@/lib/quotes";
 
 export const metadata = { title: "Тапсырмаларым" };
 
@@ -12,7 +13,7 @@ export default async function MyTasks() {
   const list = await studentAssignments(u.id, u.class_id);
   return (
     <div className="flex flex-col gap-6">
-      <PageHead lines={["Оқы.", "Орында.", "Тексер."]} sub="Мұғалім берген жұмыстар мен нәтижелер." />
+      <PageHead title="Тапсырмаларым" sub="Мұғалім берген жұмыстар мен нәтижелер." quote={QUOTES.adam} />
       {list.length ? (
         <ul className="flex flex-col gap-4">
           {list.map((a) => (
