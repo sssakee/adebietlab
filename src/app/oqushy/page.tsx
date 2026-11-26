@@ -123,12 +123,12 @@ export default async function StudentHome() {
 
         <section className="rounded-[var(--radius-card)] bg-navy p-6 text-white" aria-labelledby="lvl">
           <h2 id="lvl" className="mb-4 text-xl font-bold">Зерттеуші деңгейі</h2>
-          <ol className="grid grid-cols-3 gap-2">
+          <ol className="grid grid-cols-[1fr_1.3fr_1fr] gap-1.5">
             {LEVELS.map((l, i) => (
               <li
                 key={l.name}
                 aria-current={i === lvl.index ? "step" : undefined}
-                className={`rounded-2xl px-1 py-3 text-center text-[13px] font-bold ${i === lvl.index ? "bg-gold text-ink" : i === lvl.index + 1 ? "border-2 border-gold text-gold" : "bg-white/10"}`}
+                className={`rounded-2xl px-1 py-3 text-center text-xs font-bold ${i === lvl.index ? "bg-gold text-ink" : i === lvl.index + 1 ? "border-2 border-gold text-gold" : "bg-white/10"}`}
               >
                 {l.name}
               </li>
