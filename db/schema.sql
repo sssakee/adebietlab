@@ -48,12 +48,15 @@ create table works (
   lab jsonb not null default '{}'  -- data for lab tools (poem lines, characters, reference map, «Егер...» question)
 );
 
+-- Built-in methods have owner_id null; a teacher's own methods are visible only to that teacher.
 create table methods (
   id uuid primary key default gen_random_uuid(),
   slug text not null unique,
   name text not null,
   description text not null,
-  instructions text not null
+  instructions text not null,
+  example text not null default '',
+  owner_id uuid references profiles on delete cascade
 );
 
 create table task_sets (
@@ -114,12 +117,12 @@ create table submissions (
   unique (assignment_id, student_id)
 );
 
--- Lab tool results. kind: 'olen' | 'char_map' | 'egerde'.
+-- Lab tool results. kind: 'olen' | 'char_map' | 'egerde' | 'zheli' (оқиға желісі).
 create table lab_works (
   id uuid primary key default gen_random_uuid(),
   student_id uuid not null references profiles on delete cascade,
   work_id uuid not null references works,
-  kind text not null check (kind in ('olen', 'char_map', 'egerde')),
+  kind text not null check (kind in ('olen', 'char_map', 'egerde', 'zheli')),
   data jsonb not null default '{}',
   result jsonb not null default '{}',
   teacher_scores int[],            -- «Егер...»: 3 criteria × 0–2

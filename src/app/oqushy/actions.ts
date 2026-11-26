@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth";
 import { sql } from "@/lib/db";
-import { compareMap, POINTS, scoreTask, type Answer, type Edge } from "@/lib/grading";
+import { compareMap, compareTimeline, PLOT_ELEMENTS, POINTS, scoreTask, type Answer, type Edge } from "@/lib/grading";
 import { addPoints, getWork } from "@/lib/queries";
 import type { Task } from "@/lib/ai/schemas";
 
@@ -136,4 +136,22 @@ export async function submitAssignment(assignmentId: string, f: FormData) {
   await addPoints(u.id, POINTS.assignment);
   revalidatePath("/oqushy", "layout");
   redirect(`/oqushy/tapsyrmalar/${assignmentId}`);
+}
+
+export type ZheliResult = ReturnType<typeof compareTimeline> | null;
+
+export async function checkZheli(slug: string, order: string[], elements: Record<string, string>): Promise<ZheliResult> {
+  const u = await requireRole("student");
+  const w = await getWork(slug);
+  const ref = w?.lab.timeline;
+  if (!w || !ref) return null;
+  const ids = new Set(ref.map((e) => e.id));
+  if (order.length !== ref.length || !order.every((id) => ids.has(id))) return null;
+  const cleanEls = Object.fromEntries(Object.entries(elements).filter(([k, v]) => ids.has(k) && (PLOT_ELEMENTS as readonly string[]).includes(v)));
+  const result = compareTimeline(ref, order, cleanEls);
+  const prev = await saveLab(u.id, w.id, "zheli", { order, elements: cleanEls }, result);
+  const perfect = (r: { orderOk?: unknown; elementsOk?: unknown; total?: unknown } | null) => !!r && r.orderOk === r.total && r.elementsOk === r.total;
+  if (perfect(result) && !perfect(prev)) await addPoints(u.id, POINTS.zheli);
+  revalidatePath("/oqushy");
+  return result;
 }

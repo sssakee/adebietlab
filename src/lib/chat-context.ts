@@ -21,7 +21,7 @@ export async function resolveContext(user: User, path: string): Promise<ChatCont
     }
   }
 
-  const lab = path.match(/^\/oqushy\/zertkhana\/(olen|karta)\/([a-z0-9-]+)/);
+  const lab = path.match(/^\/oqushy\/zertkhana\/(olen|karta|zheli)\/([a-z0-9-]+)/);
   const lib = path.match(/^\/oqushy\/shygarmalar\/([a-z0-9-]+)/);
   const slug = lab?.[2] ?? lib?.[1];
   if (slug) {
@@ -29,7 +29,7 @@ export async function resolveContext(user: User, path: string): Promise<ChatCont
     if (!w) return { mode: "full" };
     const ctx: ChatContext = { mode: "full", title: w.title, text: w.text ?? undefined };
     if (lab) {
-      ctx.tool = lab[1] === "olen" ? TOOL_LABEL.olen : `${TOOL_LABEL.char_map} және ${TOOL_LABEL.egerde}`;
+      ctx.tool = lab[1] === "olen" ? TOOL_LABEL.olen : lab[1] === "zheli" ? TOOL_LABEL.zheli : `${TOOL_LABEL.char_map} және ${TOOL_LABEL.egerde}`;
       const [a] = user.class_id
         ? await sql<{ id: string; ai_mode: AiMode }[]>`select id, ai_mode from assignments
             where class_id = ${user.class_id} and kind = 'lab' and work_id = ${w.id} order by created_at desc limit 1`

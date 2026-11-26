@@ -5,7 +5,7 @@ const TOOLS = [
   { href: "/oqushy/zertkhana/olen/abai-qys", title: "Өлең өлшегіш", text: "Буын санын, ұйқас түрін, өлең өлшемін көрнекі түрде анықта.", icon: AudioLines, color: "bg-primary" },
   { href: "/oqushy/zertkhana/karta/kozy-korpesh", title: "Кейіпкер картасы", text: "Кейіпкерлерді байланыстырып, қатынасын мәтінмен дәлелде.", icon: Waypoints, color: "bg-violet" },
   { href: "/oqushy/zertkhana/karta/kozy-korpesh#egerde", title: "«Егер...» тәжірибесі", text: "Кейіпкер басқа шешім қабылдаса ше? Болжам жаса, дәлелде.", icon: GitBranch, color: "bg-red" },
-  { href: null, title: "Оқиға желісі", text: "Оқиғаларды ретке қойып, сюжет элементтеріне орналастыр. Жақында.", icon: TrendingUp, color: "bg-green-ink" },
+  { href: "/oqushy/zertkhana/zheli/kozy-korpesh", title: "Оқиға желісі", text: "Оқиғаларды ретке қойып, сюжет элементтеріне орналастыр.", icon: TrendingUp, color: "bg-green-ink" },
 ];
 
 export function ToolGrid() {

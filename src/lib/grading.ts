@@ -51,6 +51,18 @@ export function compareMap(reference: Edge[], student: Edge[]) {
   return { found: matched.length, total: reference.length, matched, missing, extra };
 }
 
+export const PLOT_ELEMENTS = ["экспозиция", "байланыс", "шиеленіс", "шарықтау шегі", "шешім"] as const;
+export type TimelineEvent = { id: string; text: string; element: string };
+
+/** Student order (event ids) and element choices vs the reference order. */
+export function compareTimeline(reference: TimelineEvent[], order: string[], elements: Record<string, string>) {
+  const orderMarks = reference.map((e, i) => order[i] === e.id); // per position
+  const orderOk = orderMarks.filter(Boolean).length;
+  const elementsOk = reference.filter((e) => elements[e.id] === e.element).length;
+  const wrong = reference.filter((e) => elements[e.id] && elements[e.id] !== e.element).map((e) => ({ id: e.id, chose: elements[e.id], right: e.element }));
+  return { orderOk, elementsOk, total: reference.length, orderMarks, wrong };
+}
+
 export const LEVELS = [
   { name: "Балапан", min: 0 },
   { name: "Қанаттанған", min: 60 },
@@ -71,4 +83,4 @@ export function levelFor(points: number) {
 }
 
 /** Points ("ашылым") awarded per activity. */
-export const POINTS = { olen: 5, charMap: 8, egerde: 10, assignment: 10 } as const;
+export const POINTS = { olen: 5, charMap: 8, egerde: 10, zheli: 8, assignment: 10 } as const;

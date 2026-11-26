@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { sql } from "./db";
-import type { Edge } from "./grading";
+import type { Edge, TimelineEvent } from "./grading";
 
 export type Character = { id: string; name: string; note: string; kind: "main" | "secondary" | "antagonist"; x: number; y: number };
 export type WorkLab = {
@@ -9,6 +9,7 @@ export type WorkLab = {
   characters?: Character[];
   reference?: Edge[];
   egerde?: { question: string; checklist: string[] };
+  timeline?: TimelineEvent[];
 };
 export type Work = {
   id: string;
@@ -29,6 +30,7 @@ export const TOOL_LABEL: Record<string, string> = {
   olen: "Өлең өлшегіш",
   char_map: "Кейіпкер картасы",
   egerde: "«Егер...» тәжірибесі",
+  zheli: "Оқиға желісі",
 };
 
 export const getWork = cache(async (slug: string) => {
@@ -38,7 +40,9 @@ export const getWork = cache(async (slug: string) => {
 
 /** Link to the lab page of a work for a tool. */
 export function toolHref(slug: string, tool: string) {
-  return tool === "olen" ? `/oqushy/zertkhana/olen/${slug}` : `/oqushy/zertkhana/karta/${slug}${tool === "egerde" ? "#egerde" : ""}`;
+  if (tool === "olen") return `/oqushy/zertkhana/olen/${slug}`;
+  if (tool === "zheli") return `/oqushy/zertkhana/zheli/${slug}`;
+  return `/oqushy/zertkhana/karta/${slug}${tool === "egerde" ? "#egerde" : ""}`;
 }
 
 export type StudentAssignment = {
@@ -97,6 +101,7 @@ export const discoveries = cache(async (studentId: string) => {
         at: r.day,
       };
     if (r.kind === "char_map") return { title: `«${r.title}»: ${r.result.found} / ${r.result.total} байланыс табылды`, tool: TOOL_LABEL.char_map, at: r.day };
+    if (r.kind === "zheli") return { title: `«${r.title}»: оқиға реті ${r.result.orderOk} / ${r.result.total}`, tool: TOOL_LABEL.zheli, at: r.day };
     return { title: `«${r.title}»: болжам жасадым`, tool: TOOL_LABEL.egerde, at: r.day };
   });
 });

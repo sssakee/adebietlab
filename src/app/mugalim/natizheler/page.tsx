@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bot } from "lucide-react";
+import { Bot, Download } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { pickClass } from "@/lib/teacher";
@@ -66,7 +66,12 @@ async function TaskTable({ a, classId }: { a: { id: string; set_id: string }; cl
   return (
     <div className="flex flex-col gap-6">
       <section className="card overflow-x-auto" aria-labelledby="tbl">
-        <h2 id="tbl" className="mb-4 text-xl font-bold">Оқушы × тапсырма</h2>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 id="tbl" className="text-xl font-bold">Оқушы × тапсырма</h2>
+          <a href={`/mugalim/natizheler/csv?a=${a.id}`} className="btn-ghost" download>
+            <Download className="size-4" aria-hidden="true" /> Excel-ге (CSV)
+          </a>
+        </div>
         <table className="w-full min-w-[560px] text-left text-sm">
           <thead className="text-muted">
             <tr>
@@ -125,12 +130,13 @@ async function TaskTable({ a, classId }: { a: { id: string; set_id: string }; cl
 }
 
 async function LabTable({ a, classId }: { a: { work_id: string; lab_tools: string[] }; classId: string }) {
-  const rows = await sql<{ full_name: string; olen: Record<string, boolean> | null; map: Record<string, number> | null; eg: number[] | null; eg_sent: boolean }[]>`
+  const rows = await sql<{ full_name: string; olen: Record<string, boolean> | null; map: Record<string, number> | null; eg: number[] | null; eg_sent: boolean; zheli: Record<string, number> | null }[]>`
     select p.full_name,
       (select result from lab_works where student_id = p.id and work_id = ${a.work_id} and kind = 'olen') as olen,
       (select result from lab_works where student_id = p.id and work_id = ${a.work_id} and kind = 'char_map') as map,
       (select teacher_scores from lab_works where student_id = p.id and work_id = ${a.work_id} and kind = 'egerde') as eg,
-      exists (select 1 from lab_works where student_id = p.id and work_id = ${a.work_id} and kind = 'egerde') as eg_sent
+      exists (select 1 from lab_works where student_id = p.id and work_id = ${a.work_id} and kind = 'egerde') as eg_sent,
+      (select result from lab_works where student_id = p.id and work_id = ${a.work_id} and kind = 'zheli') as zheli
     from class_members m join profiles p on p.id = m.student_id where m.class_id = ${classId} order by p.full_name`;
   return (
     <section className="card overflow-x-auto">
@@ -149,6 +155,7 @@ async function LabTable({ a, classId }: { a: { work_id: string; lab_tools: strin
                 <td key={t} className="num">
                   {t === "olen" && (r.olen ? (r.olen.meter_ok && r.olen.rhyme_ok ? "✓ дұрыс" : "қатесі бар") : "—")}
                   {t === "char_map" && (r.map ? `${r.map.found} / ${r.map.total}` : "—")}
+                  {t === "zheli" && (r.zheli ? `рет ${r.zheli.orderOk} / ${r.zheli.total} · элемент ${r.zheli.elementsOk} / ${r.zheli.total}` : "—")}
                   {t === "egerde" && (r.eg ? `${r.eg.reduce((s, v) => s + v, 0)} / 6` : r.eg_sent ? "бағалау керек" : "—")}
                 </td>
               ))}

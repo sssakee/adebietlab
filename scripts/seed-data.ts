@@ -62,6 +62,14 @@ export const WORKS: Work[] = [
         { from: "kodar", to: "bayan", label: "Баянға қызығады" },
         { from: "kodar", to: "kozy", label: "өліміне себепкер" },
       ],
+      // TODO: teacher should check the events and their plot elements against the textbook version of the epic.
+      timeline: [
+        { id: "e1", text: "Сарыбай мен Қарабай балаларын туылмай тұрып атастырады", element: "экспозиция" },
+        { id: "e2", text: "Сарыбай қайтыс болып, Қарабай уәдесінен тайып, елін көшіріп кетеді", element: "байланыс" },
+        { id: "e3", text: "Қозы Көрпеш ер жетіп, Баянды іздеп шығады", element: "шиеленіс" },
+        { id: "e4", text: "Қодар Қозы Көрпешті өлтіреді", element: "шарықтау шегі" },
+        { id: "e5", text: "Баян Қодардан кек алып, Қозының басында өзі де қаза табады", element: "шешім" },
+      ],
       egerde: {
         question: "Егер Қарабай уәдесінде тұрғанда, оқиға қалай өрбір еді?",
         checklist: ["Болжам кейіпкердің мінезіне сай", "Жырдан дәлел келтірдім", "Оқиғаның соңын түсіндірдім"],

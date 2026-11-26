@@ -2,7 +2,7 @@
 import { useActionState } from "react";
 import { generateTasks } from "../actions";
 
-export function GenForm({ methods, works }: { methods: { id: string; name: string; description: string }[]; works: { id: string; label: string }[] }) {
+export function GenForm({ methods, works }: { methods: { id: string; name: string; description: string; own: boolean }[]; works: { id: string; label: string }[] }) {
   const [state, action, pending] = useActionState(generateTasks, undefined);
   return (
     <form action={action} className="grid gap-6 xl:grid-cols-[1fr_380px]">
@@ -34,7 +34,7 @@ export function GenForm({ methods, works }: { methods: { id: string; name: strin
             {methods.map((m, i) => (
               <label key={m.id} className="chip cursor-pointer flex-col items-start gap-0.5 py-3">
                 <input type="radio" name="method_id" value={m.id} defaultChecked={i === 0} className="sr-only" />
-                <span>{m.name}</span>
+                <span>{m.name}{m.own && <span className="tag ml-2 bg-violet-soft text-violet">өз әдісім</span>}</span>
                 <span className="text-xs font-medium text-muted">{m.description}</span>
               </label>
             ))}

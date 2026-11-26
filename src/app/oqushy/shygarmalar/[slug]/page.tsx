@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, AudioLines, GitBranch, Info, Waypoints } from "lucide-react";
+import { ArrowLeft, AudioLines, GitBranch, Info, TrendingUp, Waypoints } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { getWork, toolHref } from "@/lib/queries";
 
@@ -17,6 +17,7 @@ export default async function WorkPage({ params }: PageProps<"/oqushy/shygarmala
     w.lab.poem && { tool: "olen", label: "Өлең өлшегіш", icon: AudioLines, color: "bg-primary" },
     w.lab.characters && { tool: "char_map", label: "Кейіпкер картасы", icon: Waypoints, color: "bg-violet" },
     w.lab.egerde && { tool: "egerde", label: "«Егер...» тәжірибесі", icon: GitBranch, color: "bg-red" },
+    w.lab.timeline && { tool: "zheli", label: "Оқиға желісі", icon: TrendingUp, color: "bg-green-ink" },
   ].filter(Boolean) as { tool: string; label: string; icon: typeof Info; color: string }[];
 
   return (

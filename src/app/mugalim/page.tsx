@@ -48,6 +48,10 @@ export default async function TeacherHome({ searchParams }: PageProps<"/mugalim"
       from lab_works, jsonb_array_elements_text(result->'missing') miss
       where kind = 'char_map' and student_id in (select * from m) group by miss)
     union all
+    (select (w->>'right') || ' элементін ' || (w->>'chose') || ' деп шатастырады', count(*)::int, 'Оқиға желісі', 'blue'
+      from lab_works, jsonb_array_elements(result->'wrong') w
+      where kind = 'zheli' and student_id in (select * from m) group by w->>'right', w->>'chose')
+    union all
     (select left(t.prompt, 70), count(*)::int, 'Тапсырма', 'blue'
       from submissions s join assignments a on a.id = s.assignment_id join tasks t on t.set_id = a.set_id
       where a.class_id = ${cls.id} and t.type <> 'open' and coalesce((s.auto_scores->>t.id::text)::int, 0) < t.points
@@ -109,7 +113,7 @@ export default async function TeacherHome({ searchParams }: PageProps<"/mugalim"
             <fieldset>
               <legend className="label">Зертхана құралдары</legend>
               <div className="flex flex-wrap gap-2">
-                {[["olen", "Өлең өлшегіш"], ["char_map", "Кейіпкер картасы"], ["egerde", "«Егер...» тәжірибесі"]].map(([v, l]) => (
+                {[["olen", "Өлең өлшегіш"], ["char_map", "Кейіпкер картасы"], ["egerde", "«Егер...» тәжірибесі"], ["zheli", "Оқиға желісі"]].map(([v, l]) => (
                   <label key={v} className="chip cursor-pointer">
                     <input type="checkbox" name="tools" value={v} className="sr-only" />
                     {l}

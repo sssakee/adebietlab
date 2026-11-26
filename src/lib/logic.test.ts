@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { toCsv } from "./csv";
 import { countSyllables, rhymeScheme, syllabify, syllabifyLine } from "./poem";
-import { compareMap, levelFor, scoreTask } from "./grading";
+import { compareMap, compareTimeline, levelFor, scoreTask } from "./grading";
 import { checkMessage } from "./safety";
 import { GenerationSchema, TaskSchema } from "./ai/schemas";
 import { mockFeedback, mockGenerate } from "./ai/mock";
@@ -117,5 +118,28 @@ describe("Деңгейлер", () => {
     expect(levelFor(42)).toMatchObject({ name: "Балапан", toNext: 18 });
     expect(levelFor(60).name).toBe("Қанаттанған");
     expect(levelFor(500)).toMatchObject({ name: "Қыран", next: null });
+  });
+});
+
+describe("Оқиға желісі", () => {
+  const ref = (WORKS.find((w) => w.slug === "kozy-korpesh")!.lab as { timeline: { id: string; text: string; element: string }[] }).timeline;
+
+  it("рет пен сюжет элементін бөлек санайды", () => {
+    const order = ["e1", "e2", "e4", "e3", "e5"];
+    const els = { e1: "экспозиция", e2: "байланыс", e3: "шиеленіс", e4: "шешім", e5: "шешім" };
+    const r = compareTimeline(ref, order, els);
+    expect(r).toMatchObject({ orderOk: 3, elementsOk: 4, total: 5 });
+    expect(r.orderMarks).toEqual([true, true, false, false, true]);
+    expect(r.wrong).toEqual([{ id: "e4", chose: "шешім", right: "шарықтау шегі" }]);
+  });
+});
+
+describe("CSV экспорт", () => {
+  it("BOM, нүктелі үтір, формула мен тырнақшадан қорғау", () => {
+    const out = toCsv([["Аты", "Балл"], ["=HYPERLINK(1)", 5], ['«Қыс»; "тест"', null]]);
+    expect(out.startsWith("﻿")).toBe(true);
+    expect(out).toContain("Аты;Балл");
+    expect(out).toContain("'=HYPERLINK(1);5");
+    expect(out).toContain('"«Қыс»; ""тест""";');
   });
 });

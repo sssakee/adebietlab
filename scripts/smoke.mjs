@@ -38,12 +38,25 @@ for (const ta of await st.locator("textarea[name^=t_]").all()) await ta.fill("А
 await st.click("text=Тапсыру"); await st.waitForSelector("text=Нәтижем");
 log("submitted; score shown:", await st.locator("h2:has-text('Нәтижем') + span").textContent());
 await st.screenshot({ path: "smoke-result.png", fullPage: true });
+// timeline: pick an element for every event, check
+await st.goto(base + "/oqushy/zertkhana/zheli/kozy-korpesh");
+for (const s of await st.locator("select[id^=el-]").all()) await s.selectOption("шешім");
+await st.click("button:has-text('Тексеру')"); await st.waitForSelector("text=сюжет элементі дұрыс"); log("timeline checked");
 
 const t = await ctx();
 await t.goto(base + "/kiru"); await t.fill("#email", "demo@adebietlab.kz"); await t.fill("#password", "demo1234"); await t.press("#password", "Enter"); await t.waitForURL(/mugalim/);
 await t.goto(base + "/mugalim/natizheler"); await t.click("text=Бағалау");
 await t.click("text=ЖИ-ден ұсыныс балы"); await t.waitForSelector("text=ЖИ ұсынысы"); log("AI suggestions shown");
 await t.click("text=Бағаны сақтау"); await t.waitForSelector("text=Баға сақталды"); log("graded");
+// CSV export
+await t.goto(base + "/mugalim/natizheler");
+const csv = await t.request.get(base + (await t.locator("a:has-text('CSV')").first().getAttribute("href")));
+log("csv:", csv.status(), csv.headers()["content-type"]);
+if (csv.status() !== 200 || !(await csv.text()).startsWith("\uFEFF")) errors.push("CSV failed");
+// custom method
+await t.goto(base + "/mugalim/zhasau");
+await t.click("text=+ Өз әдісімді қосу"); await t.fill("#mn", "Үш сұрақ"); await t.fill("#md", "Не, неге, қалай сұрақтарына жауап береді");
+await t.click("text=Әдісті сақтау"); await t.waitForSelector("text=Әдіс қосылды"); log("custom method added:", await t.locator("text=өз әдісім").count());
 // generator
 await t.goto(base + "/mugalim/zhasau");
 await t.fill("#text", "Ыбырай Алтынсарин балаларды оқуға шақырады. Ақын білімнің пайдасын түсіндіреді. Өлеңде оқу — болашақтың кілті деген ой бар. Балалар ынталы болса, көп нәрсе үйренеді.");

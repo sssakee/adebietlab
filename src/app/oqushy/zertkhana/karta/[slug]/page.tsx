@@ -69,7 +69,7 @@ export default async function KartaPage({ params }: PageProps<"/oqushy/zertkhana
         <nav aria-label="Құралдар" className="flex flex-wrap gap-2">
           <a href="#map" className="tag bg-violet-soft px-4 py-3 text-sm text-violet">Кейіпкер картасы</a>
           <a href="#egerde" className="tag bg-soft px-4 py-3 text-sm text-ink hover:bg-[#e4efff]">«Егер...» тәжірибесі</a>
-          <span className="tag bg-soft px-4 py-3 text-sm text-muted" title="Жақында">Оқиға желісі · жақында</span>
+          {w.lab.timeline && <a href={`/oqushy/zertkhana/zheli/${w.slug}`} className="tag bg-soft px-4 py-3 text-sm text-ink hover:bg-[#e4efff]">Оқиға желісі</a>}
         </nav>
       </LabHeader>
 

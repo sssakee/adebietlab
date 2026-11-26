@@ -54,10 +54,10 @@ export async function createLabAssignment(f: FormData) {
   const u = await requireRole("teacher");
   const classId = str(f, "class_id");
   await ownClass(u.id, classId);
-  const tools = f.getAll("tools").map(String).filter((t) => ["olen", "char_map", "egerde"].includes(t));
+  const tools = f.getAll("tools").map(String).filter((t) => ["olen", "char_map", "egerde", "zheli"].includes(t));
   const [w] = await sql<{ id: string; lab: Record<string, unknown> }[]>`select id, lab from works where id = ${str(f, "work_id")}`;
   // Only tools the work actually has data for.
-  const usable = tools.filter((t) => (t === "olen" ? w?.lab.poem : t === "char_map" ? w?.lab.characters : w?.lab.egerde));
+  const usable = tools.filter((t) => ({ olen: w?.lab.poem, char_map: w?.lab.characters, egerde: w?.lab.egerde, zheli: w?.lab.timeline })[t]);
   if (!w || !usable.length) redirect(`/mugalim?c=${classId}&err=tools`);
   await sql`insert into assignments (class_id, kind, work_id, lab_tools, due_at, ai_mode)
     values (${classId}, 'lab', ${w.id}, ${usable}, ${str(f, "due_at") || null}, ${str(f, "ai_mode") || "limited"})`;
@@ -101,7 +101,8 @@ async function materialFrom(f: FormData): Promise<{ text: string; title: string;
 
 export async function generateTasks(_: GenState, f: FormData): Promise<GenState> {
   const u = await requireRole("teacher");
-  const [method] = await sql<{ id: string; slug: string; name: string; description: string; instructions: string }[]>`select * from methods where id = ${str(f, "method_id")}`;
+  const [method] = await sql<{ id: string; slug: string; name: string; description: string; instructions: string; example: string }[]>`
+    select * from methods where id = ${str(f, "method_id")} and (owner_id is null or owner_id = ${u.id})`;
   if (!method) return { error: "Әдісті таңдаңыз." };
   const grade = Math.min(11, Math.max(5, Number(f.get("grade")) || 7));
   const level = ["A", "B", "C"].includes(str(f, "level")) ? str(f, "level") : "B";
@@ -117,7 +118,7 @@ export async function generateTasks(_: GenState, f: FormData): Promise<GenState>
     let gen;
     if (isMock()) gen = mockGenerate({ methodSlug: method.slug, material, count, level });
     else {
-      const r = await generateJson(GENERATE_TASKS_SYSTEM, generateTasksUser({ method, grade, level, objective, count, material }), GenerationSchema);
+      const r = await generateJson(GENERATE_TASKS_SYSTEM, generateTasksUser({ method: { ...method, instructions: method.example ? `${method.instructions}\nМұғалімнің мысал тапсырмасы (осы үлгіде жаса): ${method.example}` : method.instructions }, grade, level, objective, count, material }), GenerationSchema);
       await logUsage(u.id, r.usage);
       gen = r.data;
     }
@@ -137,6 +138,20 @@ export async function generateTasks(_: GenState, f: FormData): Promise<GenState>
     return { error: "Күтпеген қате шықты. Қайта көріңіз." };
   }
   redirect(`/mugalim/bank/${setId}`);
+}
+
+// ---------- teacher's own method ----------
+
+export async function createMethod(_: unknown, f: FormData) {
+  const u = await requireRole("teacher");
+  const name = str(f, "name").slice(0, 80);
+  const description = str(f, "description").slice(0, 300);
+  const example = str(f, "example").slice(0, 1000);
+  if (name.length < 3 || description.length < 10) return { error: "Атауын және сипаттамасын толық жазыңыз." };
+  await sql`insert into methods (slug, name, description, instructions, example, owner_id)
+    values (${"own-" + crypto.randomUUID().slice(0, 8)}, ${name}, ${description}, ${description}, ${example}, ${u.id})`;
+  revalidatePath("/mugalim/zhasau");
+  return { error: "", ok: true };
 }
 
 // ---------- review & approve ----------
