@@ -8,6 +8,7 @@ export const sql =
   g.sql ??
   postgres(process.env.DATABASE_URL ?? "postgres://app:app@localhost:5432/adebietlab", {
     prepare: false, // works with Supabase's transaction pooler too
+    max: process.env.VERCEL ? 3 : 10, // each serverless instance keeps its own pool
     connection: { search_path: "app" },
     transform: { undefined: null },
   });

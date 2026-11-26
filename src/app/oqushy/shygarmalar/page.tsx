@@ -57,7 +57,7 @@ export default async function Library({ searchParams }: PageProps<"/oqushy/shyga
       </section>
 
       {works.length ? (
-        <ul className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+        <ul className="rise grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
           {works.map((w) => (
             <li key={w.id}>
               <Link href={`/oqushy/shygarmalar/${w.slug}`} className="card flex h-full gap-4 p-5 transition-transform hover:-translate-y-0.5">

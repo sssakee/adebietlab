@@ -2,6 +2,7 @@
 import { useState, useTransition } from "react";
 import { ArrowDown, ArrowUp, GripVertical } from "lucide-react";
 import { PLOT_ELEMENTS } from "@/lib/grading";
+import { Sfx } from "./Sfx";
 import { checkZheli, type ZheliResult } from "@/app/oqushy/actions";
 
 type Ev = { id: string; text: string };
@@ -101,9 +102,10 @@ export function Timeline({ slug, events, startOrder, startElements }: { slug: st
             ))}
           </ol>
         </section>
-        <section aria-live="polite" className={result ? "rounded-[var(--radius-card)] bg-navy p-6 text-white" : "hidden"}>
+        <section aria-live="polite" className={result ? "pop rounded-[var(--radius-card)] bg-navy p-6 text-white" : "hidden"}>
           {result && (
             <>
+              <Sfx ok={result.orderOk === result.total && result.elementsOk === result.total} />
               <h2 className="text-lg font-bold">Нәтиже</h2>
               <p className="num mt-3 text-3xl font-bold text-gold">{result.orderOk} / {result.total}</p>
               <p className="text-sm text-white/85">оқиға дұрыс орында</p>

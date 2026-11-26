@@ -10,7 +10,7 @@ const TOOLS = [
 
 export function ToolGrid() {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="rise grid gap-4 md:grid-cols-2">
       {TOOLS.map((t) => {
         const body = (
           <>

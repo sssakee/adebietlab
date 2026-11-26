@@ -56,7 +56,7 @@ export default async function AssignmentPage({ params }: PageProps<"/oqushy/taps
         </p>
       )}
       {sub ? (
-        <section className="card" aria-labelledby="res">
+        <section className="pop card" aria-labelledby="res">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 id="res" className="text-2xl font-bold">Нәтижем</h2>
             <span className="num text-2xl font-bold">

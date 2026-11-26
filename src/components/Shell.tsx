@@ -2,6 +2,7 @@ import { logout } from "@/app/kiru/actions";
 import { LogOut } from "lucide-react";
 import { Logo } from "./Logo";
 import { NavLink } from "./NavLink";
+import { SoundToggle } from "./Sfx";
 
 export type NavItem = { href: string; label: string; icon: React.ReactNode; exact?: boolean };
 
@@ -40,6 +41,7 @@ export function Shell({
         </nav>
         <div className="mt-auto flex flex-col gap-3">
           {aside && <div className="hidden lg:block">{aside}</div>}
+          <SoundToggle />
           <div className="flex items-center gap-3 rounded-2xl bg-soft p-3">
             <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#dbe8fb] font-bold text-primary" aria-hidden="true">
               {user.name[0]}

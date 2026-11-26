@@ -22,7 +22,7 @@ export default async function LoginPage() {
           </h1>
           <p className="mt-4 text-lg text-white/85">5–11 сынып оқушылары мен қазақ әдебиеті мұғалімдеріне арналған зертхана.</p>
         </div>
-        <Mascot size={170} priority className="absolute -bottom-2 right-4 hidden sm:block" />
+        <Mascot size={170} priority className="float absolute -bottom-2 right-4 hidden sm:block" />
         <Ornament className="absolute inset-x-0 bottom-0" />
       </section>
       <div className="grid gap-6 md:grid-cols-2">

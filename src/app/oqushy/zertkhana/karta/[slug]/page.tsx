@@ -6,6 +6,7 @@ import { compareMap, type Edge } from "@/lib/grading";
 import { getWork, type Character } from "@/lib/queries";
 import { addEdge, removeEdge, saveEgerde, toggleVote } from "@/app/oqushy/actions";
 import { LabHeader } from "../../LabHeader";
+import { Sfx } from "@/components/Sfx";
 
 export const metadata = { title: "Кейіпкер картасы" };
 
@@ -79,6 +80,7 @@ export default async function KartaPage({ params }: PageProps<"/oqushy/zertkhana
             <h2 id="map-h" className="text-2xl font-bold">Кейіпкер картасы</h2>
             <p className="num font-bold text-violet" aria-live="polite">
               Табылған байланыс: {cmp.found} / {cmp.total}
+              <Sfx ok={cmp.extra.length === 0} watch={`${cmp.found}/${cmp.extra.length}`} />
             </p>
           </div>
           <p className="mt-2 text-sm font-medium text-muted">Кейіпкерлерді байланыстыр, әр байланысқа жырдан дәлел жаз. Үзік сызықтар — әлі анықталмаған байланыстар.</p>

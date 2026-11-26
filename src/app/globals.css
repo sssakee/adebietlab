@@ -97,3 +97,44 @@
 @utility tag {
   @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-bold;
 }
+
+/* Motion: only for people who have not asked their system to reduce it. */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+}
+@keyframes pop {
+  from { opacity: 0; transform: scale(0.94); }
+}
+@keyframes float {
+  50% { transform: translateY(-8px); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  main > :not(.fixed),
+  .rise > * {
+    animation: rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .rise > :nth-child(2) { animation-delay: 60ms; }
+  .rise > :nth-child(3) { animation-delay: 120ms; }
+  .rise > :nth-child(4) { animation-delay: 180ms; }
+  .rise > :nth-child(n + 5) { animation-delay: 240ms; }
+  .pop {
+    animation: pop 0.35s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+  }
+  .float {
+    animation: float 4.5s ease-in-out infinite;
+  }
+  .btn,
+  .chip {
+    transition-property: color, background-color, border-color, transform;
+  }
+  .btn:active:not(:disabled),
+  .chip:active {
+    transform: scale(0.97);
+  }
+  .card {
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+  a.card:hover {
+    transform: translateY(-2px);
+  }
+}

@@ -56,7 +56,7 @@ export default async function StudentHome() {
               Зертханаға кіру <ArrowRight className="size-5" aria-hidden="true" />
             </Link>
           </div>
-          <Mascot size={190} priority className="absolute bottom-3 right-6 hidden drop-shadow-xl sm:block lg:right-16" />
+          <Mascot size={190} priority className="float absolute bottom-3 right-6 hidden drop-shadow-xl sm:block lg:right-16" />
           <Ornament className="absolute inset-x-0 bottom-0 bg-navy-deep" />
         </section>
 

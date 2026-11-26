@@ -15,6 +15,7 @@
 - мұғалімнің тапсырмаларын орындау: жабық сұрақтар бірден тексеріледі;
 - **«Сұрағың бар ма?»** — Қырантай ЖИ көмекшісі: беттің контекстін біледі, мұғалім қойған режиммен жұмыс істейді;
 - **Оқиға желісі** — оқиғаларды ретке қойып, сюжет элементін таңдайды (ережемен тексеріледі);
+- дұрыс жауапқа шағын дыбыс (әдепкіде өшірулі, мәзірден қосылады) пен анимация; жүйеде «қозғалысты азайту» қосулы болса, анимация өшеді;
 - ұпай («ашылым»), деңгей (Балапан → Қанаттанған → Қыран), қатарынан күндер, белгілер.
 
 **Мұғалім**
@@ -82,10 +83,13 @@ npm run dev                          # http://localhost:3000
 
 ## Деплой (Vercel + Supabase)
 
-1. [supabase.com](https://supabase.com)-да тегін жоба ашыңыз. Project Settings → Database → Connect → Connection string → **Session pooler** жолын көшіріңіз.
-2. Сол жолмен компьютерден бір рет: `DATABASE_URL="..." npm run db:setup`.
-3. [vercel.com](https://vercel.com)-да GitHub репозиторийін импорттаңыз. Environment Variables: `DATABASE_URL`, `AUTH_SECRET`, `AI_MOCK`, `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL`, `AI_DAILY_LIMIT_STUDENT`.
-4. Deploy. Кілттерді ешқашан кодқа не чатқа жазбаңыз — тек `.env.local` пен Vercel баптауларына.
+1. [supabase.com](https://supabase.com) → New project (аймағы: Frankfurt). Ашылған соң **SQL Editor** → `db/supabase.sql` файлының бүкіл мазмұнын қойып → **Run**. Бұл кестелер мен демо деректерді жасайды (файлды `npm run db:setup && npm run db:sql` қайта шығарады).
+2. Supabase → **Connect** → **Transaction pooler** жолын көшіріңіз (порты 6543). `[YOUR-PASSWORD]` орнына жоба ашқанда қойған құпиясөзді жазыңыз.
+3. [aistudio.google.com/apikey](https://aistudio.google.com/apikey) → **Create API key** (тегін Gemini кілті).
+4. [vercel.com/new](https://vercel.com/new) → `adebietlab` репозиторийін Import → **Environment Variables**:
+   `DATABASE_URL` (2-қадам), `AUTH_SECRET` (кез келген 40 таңбалы кездейсоқ мәтін), `AI_PROVIDER=gemini`, `AI_API_KEY` (3-қадам), `AI_MODEL=gemini-flash-latest`. Сосын **Deploy**.
+
+Кілттерді ешқашан кодқа не чатқа жазбаңыз — тек `.env.local` пен Vercel баптауларына. Кілт берілмесе, сайт демо режимде (`AI_MOCK`) жұмыс істейді.
 
 Ескерту: Vercel сұрау денесін ~4,5 МБ-пен шектейді, сондықтан онда үлкен DOCX жүктеу кесілуі мүмкін.
 

@@ -1,4 +1,5 @@
 "use client";
+import { Sfx } from "@/components/Sfx";
 import { useState, useTransition } from "react";
 import { countSyllables, rhymeScheme, syllabifyLine, words } from "@/lib/poem";
 import { checkOlen, type OlenResult } from "@/app/oqushy/actions";
@@ -88,7 +89,8 @@ export function PoemLab({ slug, lines }: { slug: string; lines: string[] }) {
         </fieldset>
         <div aria-live="polite" className="mt-5">
           {result && (
-            <ul className="flex flex-col gap-2 text-sm font-bold">
+            <ul className="pop flex flex-col gap-2 text-sm font-bold">
+              <Sfx ok={result.meter_ok && result.rhyme_ok} />
               <li className={result.meter_ok ? "text-green-ink" : "text-red-ink"}>
                 {result.meter_ok ? "✓ Өлшемі дұрыс анықталды." : "✗ Өлшемі басқа. «Буындарды көрсету» батырмасымен санап көр."}
               </li>

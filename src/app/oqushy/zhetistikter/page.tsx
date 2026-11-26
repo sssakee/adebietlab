@@ -26,7 +26,7 @@ export default async function Achievements() {
   return (
     <div className="flex flex-col gap-6">
       <section className="relative overflow-hidden rounded-[32px] bg-navy p-8 text-white">
-        <Mascot size={130} className="absolute bottom-0 right-6 hidden sm:block" />
+        <Mascot size={130} className="float absolute bottom-0 right-6 hidden sm:block" />
         <p className="text-sm font-bold text-white/80">{u.class_name}</p>
         <h1 className="mt-1 text-4xl font-bold">{u.full_name}</h1>
         <p className="mt-2 text-xl font-bold text-gold">{lvl.name} зерттеуші</p>
@@ -37,7 +37,7 @@ export default async function Achievements() {
       </section>
       <section className="card" aria-labelledby="b">
         <h2 id="b" className="mb-4 text-xl font-bold">Белгілер</h2>
-        <ul className="grid gap-3 sm:grid-cols-2">
+        <ul className="rise grid gap-3 sm:grid-cols-2">
           {badges.map((b) => (
             <li key={b.name} className={`flex items-center gap-4 rounded-2xl p-4 ${b.got ? "bg-gold-soft" : "bg-soft opacity-70"}`}>
               <Award className={`size-10 shrink-0 ${b.got ? "text-gold" : "text-muted"}`} aria-hidden="true" />
