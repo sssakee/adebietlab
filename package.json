@@ -9,7 +9,7 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "db:setup": "tsx scripts/seed.ts",
+    "db:setup": "tsx --env-file-if-exists=.env.local scripts/seed.ts",
     "ai:eval": "tsx --conditions=react-server --env-file-if-exists=.env.local scripts/ai-eval.ts",
     "smoke": "node scripts/smoke.mjs"
   },

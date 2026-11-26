@@ -80,7 +80,7 @@ npm run dev                          # http://localhost:3000
 
 ## Деплой (Vercel + Supabase)
 
-1. [supabase.com](https://supabase.com)-да тегін жоба ашыңыз. Project Settings → Database → Connection string → **Transaction pooler** жолын көшіріңіз.
+1. [supabase.com](https://supabase.com)-да тегін жоба ашыңыз. Project Settings → Database → Connect → Connection string → **Session pooler** жолын көшіріңіз.
 2. Сол жолмен компьютерден бір рет: `DATABASE_URL="..." npm run db:setup`.
 3. [vercel.com](https://vercel.com)-да GitHub репозиторийін импорттаңыз. Environment Variables: `DATABASE_URL`, `AUTH_SECRET`, `AI_MOCK`, `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL`, `AI_DAILY_LIMIT_STUDENT`.
 4. Deploy. Кілттерді ешқашан кодқа не чатқа жазбаңыз — тек `.env.local` пен Vercel баптауларына.
