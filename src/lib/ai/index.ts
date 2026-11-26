@@ -12,7 +12,11 @@ const BASE_URLS: Record<string, string> = {
   groq: "https://api.groq.com/openai/v1",
 };
 
-export const isMock = () => process.env.AI_MOCK === "true" || !process.env.AI_API_KEY;
+// Values pasted into a hosting dashboard often carry a trailing newline or spaces.
+const env = (name: string) => process.env[name]?.trim() || undefined;
+const DEFAULT_MODEL: Record<string, string> = { gemini: "gemini-flash-latest", groq: "llama-3.3-70b-versatile" };
+
+export const isMock = () => env("AI_MOCK") === "true" || !env("AI_API_KEY");
 
 export class AiError extends Error {
   constructor(public userMessage: string, detail?: string) {
@@ -24,11 +28,11 @@ export type Usage = { input_tokens: number; output_tokens: number };
 type Msg = { role: "system" | "user" | "assistant"; content: string };
 
 function config() {
-  const provider = process.env.AI_PROVIDER ?? "gemini";
-  const baseUrl = process.env.AI_BASE_URL || BASE_URLS[provider];
-  const model = process.env.AI_MODEL;
-  if (!baseUrl || !model) throw new AiError("ЖИ бапталмаған. Әкімшіге хабарлаңыз.", "AI_PROVIDER/AI_BASE_URL or AI_MODEL missing");
-  return { baseUrl, model, key: process.env.AI_API_KEY! };
+  const provider = (env("AI_PROVIDER") ?? "gemini").toLowerCase();
+  const baseUrl = (env("AI_BASE_URL") ?? BASE_URLS[provider])?.replace(/\/+$/, "");
+  const model = env("AI_MODEL") ?? DEFAULT_MODEL[provider];
+  if (!baseUrl || !model) throw new AiError("ЖИ бапталмаған. Әкімшіге хабарлаңыз.", `unknown AI_PROVIDER "${provider}" without AI_BASE_URL/AI_MODEL`);
+  return { baseUrl, model, key: env("AI_API_KEY")! };
 }
 
 async function call(body: object) {
@@ -45,6 +49,7 @@ async function call(body: object) {
     throw new AiError("ЖИ-ге қосылу мүмкін болмады. Интернетті тексеріп, қайта көріңіз.", String(e));
   }
   if (res.status === 429) throw new AiError("ЖИ қазір бос емес (сұрау шегі). Бір минуттан кейін қайта көріңіз.", await res.text());
+  if (res.status === 401 || res.status === 403) throw new AiError("ЖИ кілті жарамсыз. Әкімші кілтті тексеруі керек.", `${res.status} ${await res.text()}`);
   if (!res.ok) throw new AiError("ЖИ жауап бермеді. Сәлден кейін қайта көріңіз.", `${res.status} ${await res.text()}`);
   return res;
 }

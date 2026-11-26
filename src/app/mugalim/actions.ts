@@ -133,9 +133,8 @@ export async function generateTasks(_: GenState, f: FormData): Promise<GenState>
       return s.id as string;
     });
   } catch (e) {
-    if (e instanceof AiError) return { error: e.userMessage };
     console.error(e);
-    return { error: "Күтпеген қате шықты. Қайта көріңіз." };
+    return { error: e instanceof AiError ? e.userMessage : "Күтпеген қате шықты. Қайта көріңіз." };
   }
   redirect(`/mugalim/bank/${setId}`);
 }
