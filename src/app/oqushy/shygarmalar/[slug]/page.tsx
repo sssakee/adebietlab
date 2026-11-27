@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { ViewTransition } from "react";
 import { notFound } from "next/navigation";
 import { ArrowLeft, AudioLines, GitBranch, Info, TrendingUp, Waypoints } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { getWork, toolHref } from "@/lib/queries";
+import { SplitText } from "@/components/SplitText";
 
 export async function generateMetadata({ params }: PageProps<"/oqushy/shygarmalar/[slug]">) {
   const w = await getWork((await params).slug);
@@ -24,14 +24,14 @@ export default async function WorkPage({ params }: PageProps<"/oqushy/shygarmala
   return (
     <div className="flex flex-col gap-6">
       <header className="card flex items-center gap-4 py-4">
-        <Link href="/oqushy/shygarmalar" transitionTypes={["nav-back"]} className="grid size-12 shrink-0 place-items-center rounded-2xl bg-soft hover:bg-accent-soft" aria-label="Кітапханаға қайту">
+        <Link href="/oqushy/shygarmalar" data-nav="back" className="grid size-12 shrink-0 place-items-center rounded-2xl bg-soft hover:bg-accent-soft" aria-label="Кітапханаға қайту">
           <ArrowLeft className="size-5" aria-hidden="true" />
         </Link>
         <div>
           <p className="text-xs font-bold text-muted">{w.genre}{w.grades.length > 0 && ` · ${w.grades.join(", ")}-сынып`}</p>
-          <ViewTransition name={`work-${w.slug}`} share="morph" default="none">
-            <h1 className="w-fit text-2xl font-bold">«{w.title}»</h1>
-          </ViewTransition>
+          <h1 className="text-2xl font-bold">
+            <SplitText text={`«${w.title}»`} />
+          </h1>
         </div>
       </header>
 
@@ -72,7 +72,7 @@ export default async function WorkPage({ params }: PageProps<"/oqushy/shygarmala
             <ul className="flex flex-col gap-3">
               {tools.map((t) => (
                 <li key={t.tool}>
-                  <Link href={toolHref(w.slug, t.tool)} transitionTypes={["nav-forward"]} className="group flex min-h-14 items-center gap-3 rounded-2xl bg-soft p-3 font-bold transition-[background-color,translate] hover:translate-x-1 hover:bg-accent-soft">
+                  <Link href={toolHref(w.slug, t.tool)} data-nav="forward" className="group flex min-h-14 items-center gap-3 rounded-2xl bg-soft p-3 font-bold transition-[background-color,translate] hover:translate-x-1 hover:bg-accent-soft">
                     <span className={`grid size-10 place-items-center tile rounded-xl text-on-color ${t.color}`} aria-hidden="true">
                       <t.icon className="size-5" />
                     </span>

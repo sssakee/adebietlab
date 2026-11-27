@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ViewTransition } from "react";
 import { BookOpen, Search } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { sql } from "@/lib/db";
@@ -68,14 +67,12 @@ export default async function Library({ searchParams }: PageProps<"/oqushy/shyga
         <ul className="rise grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
           {works.map((w) => (
             <li key={w.id}>
-              <Link href={`/oqushy/shygarmalar/${w.slug}`} transitionTypes={["nav-forward"]} className="card flex h-full gap-4 p-5">
-                <span className="grid size-14 shrink-0 place-items-center tile rounded-2xl bg-linear-135 from-primary to-violet text-on-color" aria-hidden="true">
+              <Link href={`/oqushy/shygarmalar/${w.slug}`} data-nav="forward" className="card flex h-full gap-4 p-5">
+                <span className="tile grid size-14 shrink-0 place-items-center rounded-2xl bg-primary text-on-color" aria-hidden="true">
                   <BookOpen className="size-7" />
                 </span>
                 <span className="min-w-0">
-                  <ViewTransition name={`work-${w.slug}`} share="morph" default="none">
-                    <span className="block w-fit text-lg font-bold">«{w.title}»</span>
-                  </ViewTransition>
+                  <span className="block w-fit text-lg font-bold">«{w.title}»</span>
                   <span className="block text-sm font-medium text-muted">
                     {w.author}
                     {w.author_years && ` (${w.author_years})`}

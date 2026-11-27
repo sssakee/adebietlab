@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { SITE_URL } from "@/lib/site";
+import { SoundEffects } from "@/components/SoundEffects";
 
 const description = "5–11 сынып оқушылары мен қазақ әдебиеті мұғалімдеріне арналған зертхана: өлең өлшегіш, кейіпкер картасы, оқиға желісі және ЖИ көмекшісі.";
 
@@ -26,7 +27,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <link rel="preload" href="/fonts/JUZ40-Bold.woff2" as="font" type="font/woff2" crossOrigin="" />
         <link rel="preload" href="/fonts/JUZ40-Medium.woff2" as="font" type="font/woff2" crossOrigin="" />
       </head>
-      <body className="min-h-dvh">{children}</body>
+      <body className="min-h-dvh">
+        {children}
+        <SoundEffects />
+      </body>
     </html>
   );
 }

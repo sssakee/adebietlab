@@ -47,7 +47,7 @@ export default async function Bank({ searchParams }: PageProps<"/mugalim/bank">)
         <ul className="rise grid gap-4 lg:grid-cols-2">
           {shown.map((s) => (
             <li key={s.id}>
-              <Link href={`/mugalim/bank/${s.id}`} transitionTypes={["nav-forward"]} className="card flex h-full flex-col gap-2 p-5">
+              <Link href={`/mugalim/bank/${s.id}`} data-nav="forward" className="card flex h-full flex-col gap-2 p-5">
                 <span className="flex flex-wrap gap-2">
                   <span className={`tag ${s.status === "approved" ? "bg-green-soft text-green-ink" : "bg-gold-soft text-ink"}`}>{s.status === "approved" ? "Бекітілген" : "Жоба"}</span>
                   <span className="tag bg-violet-soft text-violet">{s.method}</span>

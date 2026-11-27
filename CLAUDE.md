@@ -29,7 +29,8 @@ npm run smoke        # іске қосылған серверде браузер
 - Шығарма мәтінін жадтан жазба. Авторлық құқықтағы шығармаға мәтін салма. Дәйексөз тек `src/lib/quotes.ts`-те, әрқайсысының дереккөзі жазулы.
 - Беттің тақырыбы — беттің аты (`PageHead title`), ұран емес.
 - Түсті тек токенмен жаз (`bg-surface`, `bg-accent-soft`, `text-on-color`…): `bg-white` пен hex қараңғы режимді бұзады.
-- Қозғалыс тек `@media (prefers-reduced-motion: no-preference)` ішінде. Бет ауысуы — `PageTransition` (жол бойынша кілт), түрі сілтеменің `transitionTypes`-інде: мәзір `nav-tab`, тереңге `nav-forward`, артқа `nav-back`. Тақырып сөздері `SplitText`, бастапқы мөлдірлік 0 емес (LCP кешікпеуі үшін).
+- Қозғалыс тек `@media (prefers-reduced-motion: no-preference)` ішінде, тек `opacity`/`translate`/`scale`/`rotate`: `filter: blur`, `backdrop-filter` және SVG сүзгісі әлсіз телефонды қатырады. Бет ауысуы — `PageTransition`, түрі сілтеменің `data-nav` атрибутында (`tab`, `forward`, `back`). View Transitions API әдейі алынды: ескі беттің суретін түсіру әр басуға 0,3–0,5 с қосатын. Тақырып сөздері `SplitText`, бастапқы мөлдірлік 0 емес (LCP кешікпеуі үшін).
+- Алғашқы нұсқаулық — `Tour` (қадамдары `oqushy/layout.tsx`, `mugalim/layout.tsx`-те). Дыбыс — `Sfx.tsx`-тегі `sfx`, бүкіл сайтқа бір тыңдаушы `SoundEffects`; әдепкіде өшірулі.
 - Сервер әрекетінің формасындағы батырма — `Submit` (күту белгісі). Әр әрекеттің нәтижесі бетте хабармен көрінуі керек.
 - Бекітілмеген жинақ сыныпқа берілмейді (`assignSet` тексереді).
 - Бет файлынан `default`/`metadata`-дан басқа экспорт жасама — көмекші компоненттер `src/components`-те.

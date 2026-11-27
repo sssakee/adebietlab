@@ -24,8 +24,8 @@
   /* Saturated palette. Every text/background pair used in the app is ≥ 4.5:1 (large text and icons ≥ 3:1). */
   --color-primary: #0f5cf2;
   --color-primary-dark: #0a45c2;
-  --color-bg: #edf3ff;
-  --color-soft: #f2f7ff;
+  --color-bg: #f4f7ff;
+  --color-soft: #eef3ff;
   --color-line: #d3e0fa;
   --color-ink: #0b1f4d;
   --color-muted: #4a5b80;
@@ -52,20 +52,15 @@
   --color-on-gold: #0b1f4d;
   --color-muted-line: #94a6c9;
   --color-node-line: #bfd0f0;
-  --radius-card: 28px;
-}
-
-/* Hero panels always carry white text, so they keep their own deep stops in both modes. */
-:root {
-  --hero-a: #13309c;
-  --hero-b: #1a3fc4;
-  --hero-c: #5b2ee0;
-  --ink-1: #0f5cf2;
-  --ink-2: #7b2ff0;
-  --ink-3: #c0179f;
-  --shadow: 15 70 220;
-  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --ease-spring: cubic-bezier(0.3, 1.5, 0.5, 1);
+  /* the darker "edge" under pressable things; separate from text colours, which flip in dark mode */
+  --color-primary-edge: #0a3fb0;
+  --color-gold-edge: #d48a00;
+  --color-hero: #1450e0;
+  /* hero shapes sit under white text, so they stay dark in both modes */
+  --color-blob-a: #5b2ee0;
+  --color-blob-b: #a3168a;
+  --color-blob-c: #13309c;
+  --radius-card: 24px;
 }
 
 /* Dark mode follows the device setting. Every text/background pair here is ≥ 4.5:1. */
@@ -99,19 +94,21 @@
     --color-on-color: #0a1226;
     --color-muted-line: #6f80a6;
     --color-node-line: #34497e;
-    --hero-a: #10257a;
-    --hero-b: #1a35a6;
-    --hero-c: #4a22c4;
-    --shadow: 0 0 0;
+    --color-primary-edge: #2a55b8;
+    --color-gold-edge: #b07400;
+    --color-hero: #1b3fae;
+    --color-blob-a: #4a22c4;
+    --color-blob-b: #8a1475;
+    --color-blob-c: #10257a;
   }
 }
 
 @layer base {
   html {
     color-scheme: light dark;
+    /* faint dot grid: an exercise-book feel without images */
     background:
-      radial-gradient(60rem 36rem at 105% -8%, color-mix(in oklab, var(--color-violet) 16%, transparent), transparent 70%),
-      radial-gradient(54rem 32rem at -8% 4%, color-mix(in oklab, var(--color-primary) 16%, transparent), transparent 70%),
+      radial-gradient(circle, color-mix(in oklab, var(--color-line) 70%, transparent) 1.2px, transparent 1.6px) 0 0 / 22px 22px,
       var(--color-bg);
     color: var(--color-ink);
     -webkit-font-smoothing: antialiased;
@@ -125,136 +122,104 @@
     outline-offset: 3px;
   }
   ::selection {
-    background: var(--color-primary);
-    color: var(--color-on-color);
+    background: var(--color-gold);
+    color: var(--color-on-gold);
   }
   .num {
     font-variant-numeric: tabular-nums;
   }
 }
 
+:root {
+  --spring: cubic-bezier(0.3, 1.6, 0.5, 1);
+  --out: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Minimal and playful: flat fills, a 2px outline and a solid "edge" underneath instead of
+   soft blurred shadows. Pressing pushes the thing down onto its edge. No blur anywhere: it is
+   the costliest thing to paint on a cheap phone. */
 @utility card {
   @apply rounded-[var(--radius-card)] bg-surface p-6;
-  border: 1px solid color-mix(in oklab, var(--color-line) 75%, transparent);
-  box-shadow:
-    0 1px 2px rgb(var(--shadow) / 0.06),
-    0 14px 34px -18px rgb(var(--shadow) / 0.34);
+  border: 2px solid var(--color-line);
+  box-shadow: 0 4px 0 var(--color-line);
 }
-/* Deep gradient panel for page heroes: white text holds ≥ 4.5:1 on every stop. */
 @utility hero-bg {
-  background:
-    radial-gradient(36rem 20rem at 95% -10%, color-mix(in oklab, var(--ink-3) 55%, transparent), transparent 70%),
-    radial-gradient(32rem 18rem at -5% 115%, color-mix(in oklab, var(--ink-1) 65%, transparent), transparent 70%),
-    linear-gradient(120deg, var(--hero-a), var(--hero-b) 45%, var(--hero-c));
+  background: var(--color-hero);
   color: #fff;
 }
-/* Icon tile: the colour class sets the fill; this adds depth. */
 @utility tile {
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.3),
-    inset 0 -12px 18px -12px rgb(0 0 0 / 0.3),
-    0 8px 18px -10px rgb(var(--shadow) / 0.6);
+  box-shadow: inset 0 -4px 0 rgb(0 0 0 / 0.18);
 }
 @utility btn {
-  @apply relative isolate inline-flex min-h-11 items-center justify-center gap-2 overflow-hidden rounded-full px-6 font-bold select-none disabled:cursor-not-allowed disabled:opacity-50;
-  /* Shine that sweeps across on hover; sits between the fill and the label. */
-  &::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background: linear-gradient(110deg, transparent 35%, rgb(255 255 255 / 0.38) 50%, transparent 65%);
-    translate: -110% 0;
-    pointer-events: none;
+  @apply relative inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl px-6 font-bold select-none disabled:cursor-not-allowed disabled:opacity-50;
+  --edge: transparent;
+  box-shadow: 0 4px 0 var(--edge);
+  &:active:not(:disabled) {
+    translate: 0 4px;
+    box-shadow: 0 0 0 var(--edge);
+  }
+  &:disabled {
+    box-shadow: none;
   }
   @media (prefers-reduced-motion: no-preference) {
-    transition:
-      translate 0.25s var(--ease-spring),
-      scale 0.15s,
-      box-shadow 0.25s,
-      background-position 0.6s var(--ease-out),
-      color 0.2s,
-      border-color 0.2s,
-      background-color 0.2s;
+    transition: translate 0.12s var(--out), box-shadow 0.12s var(--out), background-color 0.2s, color 0.2s, border-color 0.2s, filter 0.2s;
     &:hover:not(:disabled) {
       translate: 0 -2px;
-    }
-    &:hover:not(:disabled)::after {
-      translate: 110% 0;
-      transition: translate 0.7s var(--ease-out);
-    }
-    & svg:last-child:not(:first-child) {
-      transition: translate 0.25s var(--ease-spring);
-    }
-    &:hover:not(:disabled) svg:last-child:not(:first-child) {
-      translate: 3px 0;
+      box-shadow: 0 6px 0 var(--edge);
     }
     &:active:not(:disabled) {
-      scale: 0.96;
+      translate: 0 4px;
+      box-shadow: 0 0 0 var(--edge);
+    }
+    & svg:last-child:not(:first-child) {
+      transition: translate 0.25s var(--spring);
+    }
+    &:hover:not(:disabled) svg:last-child:not(:first-child) {
+      translate: 4px 0;
     }
   }
 }
 @utility btn-primary {
-  @apply btn text-on-color;
-  background-image: linear-gradient(120deg, var(--color-primary), var(--color-violet) 55%, var(--color-primary));
-  background-size: 220% 100%;
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.25),
-    0 10px 22px -10px color-mix(in oklab, var(--color-primary) 80%, transparent);
-  &:hover:not(:disabled) {
-    background-position: 100% 0;
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.25),
-      0 16px 30px -12px color-mix(in oklab, var(--color-violet) 80%, transparent);
-  }
+  @apply btn bg-primary text-on-color hover:brightness-110;
+  --edge: var(--color-primary-edge);
 }
 @utility btn-gold {
-  @apply btn text-on-gold;
-  background-image: linear-gradient(120deg, var(--color-gold), var(--color-gold-2) 55%, var(--color-gold));
-  background-size: 220% 100%;
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.45),
-    0 10px 24px -10px color-mix(in oklab, var(--color-gold-2) 85%, transparent);
-  &:hover:not(:disabled) {
-    background-position: 100% 0;
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.45),
-      0 16px 30px -10px color-mix(in oklab, var(--color-gold-2) 90%, transparent);
-  }
+  @apply btn bg-gold text-on-gold hover:brightness-105;
+  --edge: var(--color-gold-edge);
 }
 @utility btn-ghost {
   @apply btn border-2 border-line bg-surface text-ink;
-  &::after {
-    background: linear-gradient(110deg, transparent 35%, color-mix(in oklab, var(--color-primary) 14%, transparent) 50%, transparent 65%);
-  }
+  --edge: var(--color-line);
   &:hover:not(:disabled) {
-    @apply border-primary bg-accent-soft text-primary-dark;
-    box-shadow: 0 10px 22px -14px var(--color-primary);
+    @apply border-primary text-primary-dark;
+    --edge: var(--color-primary);
   }
 }
 @utility chip {
   @apply inline-flex min-h-11 items-center rounded-2xl border-2 border-line bg-surface px-5 font-bold text-ink;
+  box-shadow: 0 3px 0 var(--color-line);
   &:hover {
     border-color: var(--color-primary);
   }
   &[aria-pressed="true"],
   &[aria-current="true"],
   &:has(input:checked) {
-    @apply border-transparent text-on-color;
-    background-image: linear-gradient(120deg, var(--color-primary), var(--color-violet));
-    box-shadow: 0 8px 18px -10px var(--color-primary);
+    @apply border-primary-edge bg-primary text-on-color;
+    box-shadow: 0 3px 0 var(--color-primary-edge);
   }
   &:has(input:focus-visible) {
     outline: 3px solid var(--color-primary);
     outline-offset: 3px;
   }
   @media (prefers-reduced-motion: no-preference) {
-    transition: translate 0.25s var(--ease-spring), scale 0.15s, box-shadow 0.25s, color 0.2s, border-color 0.2s;
-    &:hover {
-      translate: 0 -2px;
-    }
+    transition: translate 0.12s var(--out), box-shadow 0.12s var(--out), color 0.2s, border-color 0.2s, background-color 0.2s;
     &:active {
-      scale: 0.96;
+      translate: 0 3px;
+      box-shadow: 0 0 0 var(--color-line);
+    }
+    &[aria-pressed="true"],
+    &:has(input:checked) {
+      animation: boing 0.35s var(--spring);
     }
   }
 }
@@ -265,7 +230,7 @@
   }
   &:focus {
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-primary) 22%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-primary) 20%, transparent);
   }
   @media (prefers-reduced-motion: no-preference) {
     transition: border-color 0.2s, box-shadow 0.2s;
@@ -276,16 +241,17 @@
 }
 @utility tag {
   @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-bold;
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, currentColor 18%, transparent);
 }
 
-/* Text: words of a heading rise in one by one; the hero swaps one word in place. */
-.word {
-  display: inline-block;
+/* Words of a heading hop in; the entry hero swaps one word in place. */
+/* in a layer so a `block` utility on the same element wins */
+@layer components {
+  .word {
+    display: inline-block;
+  }
 }
 .swap {
   display: inline-grid;
-  perspective: 30em;
 }
 .swap > * {
   grid-area: 1 / 1;
@@ -294,134 +260,201 @@
   visibility: hidden;
 }
 
-/* Motion: only for people who have not asked their system to reduce it. */
+/* Decorative shapes in heroes. Transform-only animation, so the compositor does it. */
+.blob {
+  position: absolute;
+  border-radius: 42% 58% 63% 37% / 45% 40% 60% 55%;
+  pointer-events: none;
+}
+
+/* Skeleton shimmer while a page loads. */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-soft);
+}
+
+/* Spotlight hole of the first-visit tour. */
+.tour-hole {
+  position: fixed;
+  z-index: 60;
+  border-radius: 18px;
+  box-shadow:
+    0 0 0 4px var(--color-gold),
+    0 0 0 100vmax rgb(8 15 35 / 0.55);
+  pointer-events: none;
+}
+
 @keyframes rise {
-  from { opacity: 0; transform: translateY(14px); }
+  from { opacity: 0; translate: 0 14px; }
 }
 @keyframes pop {
-  from { opacity: 0; transform: scale(0.94); }
+  from { opacity: 0; scale: 0.9; }
 }
 @keyframes float {
-  50% { transform: translateY(-8px); }
+  50% { translate: 0 -8px; }
 }
-/* Starts faintly visible, never at opacity 0, so the heading still counts for the first paint. */
-@keyframes word-in {
-  from { opacity: 0.12; transform: translateY(0.5em) rotate(3deg) scale(0.96); filter: blur(8px); }
+@keyframes hop {
+  from { opacity: 0.15; translate: 0 0.45em; rotate: 4deg; }
 }
 @keyframes swap {
-  0% { opacity: 0; transform: translateY(0.55em) rotateX(-75deg); filter: blur(6px); }
-  4%, 25% { opacity: 1; transform: none; filter: none; }
-  29%, 100% { opacity: 0; transform: translateY(-0.55em) rotateX(75deg); filter: blur(6px); }
+  0% { opacity: 0; translate: 0 0.6em; rotate: -6deg; }
+  4%, 25% { opacity: 1; translate: 0 0; rotate: 0deg; }
+  29%, 100% { opacity: 0; translate: 0 -0.6em; rotate: 6deg; }
+}
+@keyframes boing {
+  40% { scale: 1.08; }
+  70% { scale: 0.97; }
+}
+@keyframes wiggle {
+  25% { rotate: -10deg; }
+  75% { rotate: 10deg; }
+}
+@keyframes shake {
+  20%, 60% { translate: -6px 0; }
+  40%, 80% { translate: 6px 0; }
+}
+@keyframes grow {
+  from { scale: 0 1; }
+}
+@keyframes spin-slow {
+  to { rotate: 360deg; }
+}
+@keyframes breathe {
+  50% { scale: 1.12; }
+}
+@keyframes shimmer {
+  to { translate: 100% 0; }
+}
+@keyframes draw {
+  from { stroke-dashoffset: var(--len, 300); }
 }
 @keyframes panel-in {
   from { opacity: 0; translate: 48px 0; }
 }
+@keyframes slide-bar {
+  from { translate: -100% 0; }
+  to { translate: 250% 0; }
+}
 @keyframes fade-in {
   from { opacity: 0; }
 }
-@keyframes drift-1 {
-  50% { transform: translate(120px, 60px) scale(1.15); }
-}
-@keyframes drift-2 {
-  50% { transform: translate(-140px, -40px) scale(0.85); }
-}
-@keyframes drift-3 {
-  50% { transform: translate(80px, -90px) scale(1.2); }
-}
+
 @media (prefers-reduced-motion: no-preference) {
-  /* Lists rise in; page headers only animate their words, so the largest paint is not delayed. */
+  /* Lists hop in; the largest text is never hidden, so the first paint is not delayed. */
   .rise > * {
-    animation: rise 0.5s var(--ease-out) both;
+    animation: rise 0.45s var(--out) both;
   }
-  .rise > :nth-child(2) { animation-delay: 60ms; }
-  .rise > :nth-child(3) { animation-delay: 120ms; }
-  .rise > :nth-child(4) { animation-delay: 180ms; }
-  .rise > :nth-child(n + 5) { animation-delay: 240ms; }
+  .rise > :nth-child(2) { animation-delay: 50ms; }
+  .rise > :nth-child(3) { animation-delay: 100ms; }
+  .rise > :nth-child(4) { animation-delay: 150ms; }
+  .rise > :nth-child(n + 5) { animation-delay: 200ms; }
   .pop {
-    animation: pop 0.35s var(--ease-spring) both;
+    animation: pop 0.35s var(--spring) both;
   }
   .float {
     animation: float 4.5s ease-in-out infinite;
   }
   .word {
-    animation: word-in 0.7s var(--ease-out) both;
-    animation-delay: calc(var(--i, 0) * 55ms);
+    animation: hop 0.55s var(--spring) both;
+    animation-delay: calc(var(--i, 0) * 50ms);
   }
-  /* four words, 2.6s each; one fades out while the next fades in */
+  /* four words, 2.6s each; one leaves as the next arrives */
   .swap > :nth-child(n) {
     visibility: visible;
-    animation: swap 10.4s cubic-bezier(0.6, 0, 0.2, 1) infinite both;
+    animation: swap 10.4s var(--out) infinite both;
     animation-delay: calc(var(--i, 0) * 2.6s - 0.45s);
   }
+  .blob {
+    animation: spin-slow var(--t, 24s) linear infinite;
+  }
+  .blob.breathe {
+    animation: spin-slow var(--t, 24s) linear infinite, breathe 7s ease-in-out infinite;
+  }
+  .blob-star {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: spin-slow 14s linear infinite, breathe 3s ease-in-out infinite;
+  }
+  .skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    translate: -100% 0;
+    background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--color-surface) 70%, transparent), transparent);
+    animation: shimmer 1.2s ease-in-out infinite;
+  }
   .card {
-    transition: box-shadow 0.25s, translate 0.25s var(--ease-spring), border-color 0.25s;
+    transition: translate 0.2s var(--spring), box-shadow 0.2s var(--out), border-color 0.2s;
   }
   a.card:hover {
     translate: 0 -3px;
-    border-color: color-mix(in oklab, var(--color-primary) 40%, transparent);
-    box-shadow:
-      0 1px 2px rgb(var(--shadow) / 0.06),
-      0 22px 40px -20px rgb(var(--shadow) / 0.5);
+    border-color: var(--color-primary);
+    box-shadow: 0 7px 0 var(--color-primary);
   }
-  .tile {
-    transition: scale 0.3s var(--ease-spring), rotate 0.3s var(--ease-spring);
+  a.card:active {
+    translate: 0 2px;
+    box-shadow: 0 2px 0 var(--color-primary);
   }
-  a:hover .tile {
-    scale: 1.08;
-    rotate: -4deg;
+  a:hover .tile,
+  a:hover .wiggle,
+  button:hover .wiggle,
+  .wiggle:hover {
+    animation: wiggle 0.45s ease-in-out;
+  }
+  [aria-current="page"] .bounce {
+    animation: boing 0.45s var(--spring);
+  }
+  [role="status"]:not(:empty) {
+    animation: pop 0.35s var(--spring) both;
+  }
+  p[role="alert"] {
+    animation: shake 0.4s ease-in-out;
+  }
+  [role="progressbar"] > * {
+    transform-origin: left;
+    animation: grow 0.9s var(--out) both;
+  }
+  .ring-draw {
+    animation: draw 1s var(--out) 0.2s both;
+  }
+  .draw {
+    stroke-dasharray: var(--len, 300);
+    animation: draw 0.9s var(--out) 0.4s both;
   }
   #chat-panel:not([hidden]) {
-    animation: panel-in 0.35s var(--ease-out) both;
+    animation: panel-in 0.3s var(--out) both;
   }
   .backdrop {
-    animation: fade-in 0.25s both;
+    animation: fade-in 0.2s both;
   }
-  .lq-1,
-  .lq-2,
-  .lq-3,
-  .lq-4 {
-    transform-box: fill-box;
-    transform-origin: center;
+  .tour-hole {
+    transition: top 0.35s var(--out), left 0.35s var(--out), width 0.35s var(--out), height 0.35s var(--out);
   }
-  .lq-1 { animation: drift-1 14s ease-in-out infinite; }
-  .lq-2 { animation: drift-2 17s ease-in-out infinite; }
-  .lq-3 { animation: drift-3 12s ease-in-out infinite; }
-  .lq-4 { animation: drift-2 19s ease-in-out infinite reverse; }
+  .nav-pending::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    width: 40%;
+    border-radius: inherit;
+    background: var(--color-gold);
+    animation: slide-bar 0.8s ease-in-out infinite;
+  }
+  .tour-card {
+    animation: pop 0.35s var(--spring) both;
+  }
 }
 
-/* Page transitions (React <ViewTransition>): tabs rise, deeper pages slide in from the right,
-   "back" slides from the left, anything else cross-fades. Fixed bars stay put. */
-::view-transition {
-  pointer-events: none;
+/* Page entry, set by PageTransition. Nothing on the first load (no data-nav yet), so the
+   largest paint is never held back. Opacity and translate only. */
+@keyframes page-in {
+  from { opacity: 0; translate: var(--px, 0) var(--py, 0); }
 }
-@keyframes vt-out {
-  to { opacity: 0; translate: var(--vt-x, 0) var(--vt-y, 0); scale: var(--vt-s, 1); filter: blur(4px); }
-}
-@keyframes vt-in {
-  from { opacity: 0; translate: var(--vt-x, 0) var(--vt-y, 0); scale: var(--vt-s, 1); filter: blur(4px); }
-}
-::view-transition-old(.nav-forward) { --vt-x: -40px; animation: vt-out 0.18s ease-in both; }
-::view-transition-new(.nav-forward) { --vt-x: 40px; animation: vt-in 0.4s var(--ease-out) 0.08s both; }
-::view-transition-old(.nav-back) { --vt-x: 40px; animation: vt-out 0.18s ease-in both; }
-::view-transition-new(.nav-back) { --vt-x: -40px; animation: vt-in 0.4s var(--ease-out) 0.08s both; }
-::view-transition-old(.nav-tab) { --vt-s: 0.98; animation: vt-out 0.16s ease-in both; }
-::view-transition-new(.nav-tab) { --vt-y: 18px; animation: vt-in 0.42s var(--ease-out) 0.06s both; }
-::view-transition-old(.vt-fade) { animation: vt-out 0.15s ease-in both; }
-::view-transition-new(.vt-fade) { animation: vt-in 0.3s ease-out 0.05s both; }
-::view-transition-group(.morph) {
-  animation-duration: 0.45s;
-  animation-timing-function: var(--ease-out);
-}
-::view-transition-image-pair(.morph) {
-  animation-name: via-blur;
-}
-@keyframes via-blur {
-  30% { filter: blur(3px); }
-}
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(*),
-  ::view-transition-old(*),
-  ::view-transition-new(*) {
-    animation: none !important;
+@media (prefers-reduced-motion: no-preference) {
+  [data-nav] .page-enter {
+    animation: page-in 0.22s ease-out both;
   }
+  [data-nav="forward"] .page-enter { --px: 28px; animation-duration: 0.3s; animation-timing-function: var(--out); }
+  [data-nav="back"] .page-enter { --px: -28px; animation-duration: 0.3s; animation-timing-function: var(--out); }
+  [data-nav="tab"] .page-enter { --py: 14px; animation-duration: 0.35s; animation-timing-function: var(--spring); }
 }

@@ -24,7 +24,7 @@ export function ToolGrid() {
           </>
         );
         return t.href ? (
-          <Link key={t.title} href={t.href} transitionTypes={["nav-forward"]} className="card flex gap-4 p-5">
+          <Link key={t.title} href={t.href} data-nav="forward" className="card flex gap-4 p-5">
             {body}
           </Link>
         ) : (

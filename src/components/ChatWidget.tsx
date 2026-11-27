@@ -3,6 +3,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Send, X } from "lucide-react";
+import { sfx } from "./Sfx";
 
 type Msg = { role: "user" | "assistant"; content: string };
 type Info = { mode: "off" | "limited" | "full"; title: string | null; remaining: number };
@@ -72,6 +73,7 @@ export function ChatWidget() {
         setMsgs(next.slice(0, -1));
         setInput(q);
         setError(j.error ?? "Қате шықты. Қайта көр.");
+        sfx.no();
         return;
       }
       const reader = res.body.getReader();
@@ -84,6 +86,7 @@ export function ChatWidget() {
         setMsgs([...next, { role: "assistant", content: acc }]);
       }
       setInfo((i) => i && { ...i, remaining: Math.max(0, i.remaining - 1) });
+      sfx.step();
     } catch {
       setMsgs(next.slice(0, -1));
       setError("Желі қатесі. Интернетті тексеріп, қайта көр.");
@@ -100,19 +103,19 @@ export function ChatWidget() {
         disabled={off}
         aria-expanded={open}
         aria-controls="chat-panel"
-        style={{ viewTransitionName: "chat-fab" }}
         title={off ? "Бұл тапсырмада мұғалім ЖИ көмекшісін өшірген" : undefined}
-        className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-3 z-30 flex items-center gap-2 rounded-full bg-surface p-2 font-bold sm:pr-5 shadow-[0_12px_30px_-8px_rgb(var(--shadow)/0.45)] ring-1 ring-line transition-[translate,box-shadow] hover:-translate-y-1 hover:shadow-[0_18px_36px_-10px_rgb(var(--shadow)/0.6)] disabled:cursor-not-allowed disabled:opacity-60 sm:right-6 lg:bottom-6"
+        className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-3 z-30 flex items-center gap-2 rounded-full bg-surface p-2 font-bold sm:pr-5 border-2 border-line shadow-[0_4px_0_var(--color-line)] transition-[translate,box-shadow,border-color] hover:-translate-y-1 hover:border-primary hover:shadow-[0_6px_0_var(--color-primary)] active:translate-y-1 active:shadow-none disabled:cursor-not-allowed disabled:opacity-60 sm:right-6 lg:bottom-6"
       >
-        <span className="grid size-12 place-items-center overflow-hidden rounded-full bg-linear-135 from-accent-soft to-violet-soft">
-          <Image src="/mascot/kyrantay.png" alt="" width={40} height={51} />
+        <span className="grid size-12 place-items-center overflow-hidden rounded-full bg-accent-soft">
+          {/* the mascot waves when hovered */}
+          <Image src="/mascot/kyrantay.png" alt="" width={40} height={51} className="wiggle" />
         </span>
         {/* on phones only the mascot shows, so the button covers less of the page */}
         <span className="max-sm:sr-only">{off ? "ЖИ өшірулі" : "Сұрағың бар ма?"}</span>
       </button>
 
       {open && (
-        <div className="backdrop fixed inset-0 z-40 bg-black/50 backdrop-blur-[2px]" onClick={() => setOpen(false)} aria-hidden="true" />
+        <div className="backdrop fixed inset-0 z-40 bg-black/50" onClick={() => setOpen(false)} aria-hidden="true" />
       )}
       <section
         id="chat-panel"
@@ -149,7 +152,7 @@ export function ChatWidget() {
           {msgs.map((m, i) => (
             <p
               key={i}
-              className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-[15px] ${m.role === "user" ? "self-end bg-linear-120 from-primary to-violet text-on-color" : "self-start bg-soft"}`}
+              className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-[15px] ${m.role === "user" ? "pop self-end bg-primary text-on-color" : "self-start bg-soft"}`}
             >
               <span className="sr-only">{m.role === "user" ? "Сен: " : "Қырантай: "}</span>
               {m.content || <span className="text-muted">Ойланып жатырмын…</span>}

@@ -1,5 +1,6 @@
 import { Ornament } from "./Ornament";
 import { SplitText } from "./SplitText";
+import { Blobs } from "./Blobs";
 
 export type HeadQuote = { lines: string[]; by: string };
 
@@ -10,6 +11,7 @@ export type HeadQuote = { lines: string[]; by: string };
 export function PageHead({ title, sub, quote, stats, children }: { title: string; sub: string; quote?: HeadQuote; stats?: [string, number][]; children?: React.ReactNode }) {
   return (
     <header className="relative overflow-hidden rounded-[32px] hero-bg px-6 pb-12 pt-7 text-white sm:px-10">
+      <Blobs />
       <div className="relative z-10 flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
         <div className="min-w-0">
           <h1 className="text-3xl font-bold leading-[1.1] sm:text-4xl">
@@ -19,7 +21,7 @@ export function PageHead({ title, sub, quote, stats, children }: { title: string
           {stats && (
             <ul className="mt-4 flex flex-wrap gap-2">
               {stats.map(([label, n]) => (
-                <li key={label} className="tag bg-white/12 px-4 py-2 text-sm text-white backdrop-blur-sm">
+                <li key={label} className="tag bg-white/15 px-4 py-2 text-sm text-white">
                   {label}: <b className="num ml-1 text-base">{n}</b>
                 </li>
               ))}

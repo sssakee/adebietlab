@@ -16,6 +16,11 @@ for (let i = 0; i < 5; i++) await tryPin("0000");
 await tryPin("1234"); await st.waitForSelector("text=Тым көп қате әрекет"); log("sign-in limit holds");
 await st.fill("#name", "Айару");
 await st.fill("#pin", "1234"); await st.click("text=Зертханаға кіру"); await st.waitForURL(/oqushy/);
+// first-visit tour: shows once, steps with the keyboard, does not come back after it is closed
+await st.waitForSelector("#tour-title:has-text('Қырантай')"); await st.keyboard.press("ArrowRight");
+await st.waitForSelector("#tour-title:has-text('Шығармалар')"); await st.click("text=Өткізу");
+await st.reload(); await st.waitForTimeout(500);
+if (await st.locator("#tour-title").count()) errors.push("tour came back after closing"); else log("tour shown once and closed");
 // role guard
 await st.goto(base + "/mugalim"); log("student → /mugalim lands on", new URL(st.url()).pathname);
 // olen check
@@ -50,6 +55,7 @@ await st.click("button:has-text('Тексеру')"); await st.waitForSelector("t
 
 const t = await ctx();
 await t.goto(base + "/kiru"); await t.fill("#email", "demo@adebietlab.kz"); await t.fill("#password", "demo1234"); await t.press("#password", "Enter"); await t.waitForURL(/mugalim/);
+await t.click("text=Өткізу"); // teacher tour
 await t.goto(base + "/mugalim/natizheler"); await t.click("text=Бағалау");
 await t.click("text=ЖИ-ден ұсыныс балы"); await t.waitForSelector("text=ЖИ ұсынысы"); log("AI suggestions shown");
 await t.click("text=Бағаны сақтау"); await t.waitForSelector("text=Баға сақталды"); log("graded");

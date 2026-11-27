@@ -6,7 +6,7 @@ import { Mascot } from "@/components/Mascot";
 import { Ornament } from "@/components/Ornament";
 import { StudentForm, TeacherForm } from "./Forms";
 import { Quote } from "@/components/Quote";
-import { LiquidMask } from "@/components/LiquidMask";
+import { Blobs } from "@/components/Blobs";
 import { SplitText } from "@/components/SplitText";
 import Link from "next/link";
 import { ArrowRight, AudioLines, MessageCircleQuestion, Waypoints, Wand2 } from "lucide-react";
@@ -20,7 +20,7 @@ export default async function LoginPage() {
     <div className="mx-auto flex max-w-6xl flex-col gap-6 p-4 sm:p-8">
       <Logo />
       <section className="relative overflow-hidden rounded-[32px] hero-bg px-6 pb-14 pt-9 sm:px-10 sm:pb-20 sm:pt-14">
-        <LiquidMask />
+        <Blobs big />
         <div className="relative z-10 max-w-xl">
           <h1 className="text-3xl font-bold leading-tight sm:text-5xl">
             <SplitText text="Шығарманы оқып қана қоймай," /> <span className="sr-only">зерттейтін</span>
@@ -42,7 +42,7 @@ export default async function LoginPage() {
             <a href="#st" className="btn-gold h-13 px-7">
               Оқушы ретінде кіру <ArrowRight className="size-5" aria-hidden="true" />
             </a>
-            <a href="#tc" className="btn h-13 border-2 border-white/50 bg-white/10 px-7 text-white backdrop-blur-sm hover:border-white hover:bg-white/20">
+            <a href="#tc" className="btn h-13 border-2 border-white/60 px-7 text-white [--edge:rgb(255_255_255/0.35)] hover:border-white hover:bg-white/10">
               Мұғалім ретінде кіру
             </a>
           </div>
@@ -86,7 +86,7 @@ export default async function LoginPage() {
         <ol className="mt-4 grid gap-4 md:grid-cols-3">
           {STEPS.map((t, i) => (
             <li key={t} className="flex gap-3">
-              <span className="num grid size-9 shrink-0 place-items-center rounded-full bg-linear-135 from-primary to-violet font-bold text-on-color shadow-[0_8px_16px_-8px_var(--color-primary)]">{i + 1}</span>
+              <span className="num grid size-9 shrink-0 place-items-center rounded-full bg-primary font-bold text-on-color shadow-[0_3px_0_var(--color-primary-edge)]">{i + 1}</span>
               <span className="pt-1.5">{t}</span>
             </li>
           ))}
