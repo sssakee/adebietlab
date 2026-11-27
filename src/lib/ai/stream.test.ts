@@ -22,3 +22,9 @@ test("streamChat reads past chunks with no text", async () => {
   expect(text).toBe("Сәлем, дос");
   expect(usage).toEqual({ input_tokens: 3, output_tokens: 2 });
 });
+
+test("cleanText drops other scripts the model sometimes mixes into Kazakh", async () => {
+  const { cleanText } = await import("./index");
+  expect(cleanText("көз алдыどのように елестейді")).toBe("көз алды елестейді");
+  expect(cleanText("Абай «Қыс» өлеңі, 1-шумақ.")).toBe("Абай «Қыс» өлеңі, 1-шумақ.");
+});

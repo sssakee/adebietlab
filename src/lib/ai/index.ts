@@ -25,6 +25,11 @@ export class AiError extends Error {
 }
 
 export type Usage = { input_tokens: number; output_tokens: number };
+
+// The free Flash-Lite model now and then drops a fragment of another script into Kazakh text
+// («көз алдыどのように», «сүзгىسىнен»). Kazakh here is Cyrillic, so those letters are always noise.
+const FOREIGN = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Arabic}\p{Script=Thai}\p{Script=Devanagari}]+/gu;
+export const cleanText = (t: string) => t.replace(FOREIGN, "");
 type Msg = { role: "system" | "user" | "assistant"; content: string };
 
 function config() {
@@ -82,7 +87,7 @@ export async function generateJson<T>(system: string, user: string, schema: z.Zo
     const choice = json.choices?.[0];
     if (choice?.finish_reason === "length") throw new AiError("ЖИ жауабы тым ұзын болып кесіліп қалды. Тапсырма санын азайтып көріңіз.");
     if (choice?.finish_reason === "content_filter") throw new AiError("ЖИ бұл сұрауға жауап беруден бас тартты. Материалды тексеріңіз.");
-    const text: string = choice?.message?.content ?? "";
+    const text: string = cleanText(choice?.message?.content ?? "");
     let parsed: unknown;
     try {
       parsed = JSON.parse(text.replace(/^```(?:json)?\s*|\s*```$/g, ""));
@@ -135,7 +140,7 @@ export async function streamChat(system: string, history: Msg[], onDone: (u: Usa
               usage.input_tokens = j.usage.prompt_tokens ?? 0;
               usage.output_tokens = j.usage.completion_tokens ?? 0;
             }
-            const delta = j.choices?.[0]?.delta?.content;
+            const delta = cleanText(j.choices?.[0]?.delta?.content ?? "");
             if (delta) {
               ctrl.enqueue(enc.encode(delta));
               sent = true;

@@ -1,6 +1,7 @@
 "use client";
 import { useActionState } from "react";
 import { generateTasks } from "../actions";
+import { FilePick } from "@/components/FilePick";
 
 export function GenForm({ methods, works }: { methods: { id: string; name: string; description: string; own: boolean }[]; works: { id: string; label: string }[] }) {
   const [state, action, pending] = useActionState(generateTasks, undefined);
@@ -9,10 +10,7 @@ export function GenForm({ methods, works }: { methods: { id: string; name: strin
     <form action={action} key={JSON.stringify(v)} className="grid gap-6 xl:grid-cols-[1fr_380px]">
       <section className="card flex flex-col gap-5" aria-labelledby="mat">
         <h2 id="mat" className="text-xl font-bold">1. Материал</h2>
-        <div>
-          <label htmlFor="file" className="label">Файл жүктеу (TXT, DOCX, 10 МБ-қа дейін)</label>
-          <input id="file" name="file" type="file" accept=".txt,.docx" className="field file:mr-4 file:rounded-full file:border-0 file:bg-accent-soft file:px-4 file:py-2 file:font-bold file:text-primary" />
-        </div>
+        <FilePick id="file" name="file" accept=".txt,.docx" label="Файл жүктеу (TXT, DOCX, 10 МБ-қа дейін)" />
         <div>
           <label htmlFor="text" className="label">немесе мәтінді қойыңыз</label>
           <textarea id="text" name="text" rows={9} maxLength={30000} defaultValue={v.text} className="field" placeholder="Сабаққа арналған үзінді, мақала немесе түсіндірме…" />
