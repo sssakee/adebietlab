@@ -32,21 +32,29 @@ function config() {
   const baseUrl = (env("AI_BASE_URL") ?? BASE_URLS[provider])?.replace(/\/+$/, "");
   const model = env("AI_MODEL") ?? DEFAULT_MODEL[provider];
   if (!baseUrl || !model) throw new AiError("ЖИ бапталмаған. Әкімшіге хабарлаңыз.", `unknown AI_PROVIDER "${provider}" without AI_BASE_URL/AI_MODEL`);
-  return { baseUrl, model, key: env("AI_API_KEY")! };
+  // Gemini's flash models think before answering; at the default depth long Kazakh answers ran past
+  // the 60 s timeout. "low" is accepted by both 2.5 and 3 models; other providers reject the field.
+  const extra = provider === "gemini" ? { reasoning_effort: "low" } : {};
+  return { baseUrl, model, key: env("AI_API_KEY")!, extra };
 }
 
 async function call(body: object) {
-  const { baseUrl, model, key } = config();
+  const { baseUrl, model, key, extra } = config();
   let res: Response;
-  try {
-    res = await fetch(`${baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-      body: JSON.stringify({ model, ...body }),
-      signal: AbortSignal.timeout(60_000),
-    });
-  } catch (e) {
-    throw new AiError("ЖИ-ге қосылу мүмкін болмады. Интернетті тексеріп, қайта көріңіз.", String(e));
+  // A busy model answers 503 at once; two short retries usually get through.
+  for (let attempt = 0; ; attempt++) {
+    try {
+      res = await fetch(`${baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+        body: JSON.stringify({ model, ...extra, ...body }),
+        signal: AbortSignal.timeout(60_000),
+      });
+    } catch (e) {
+      throw new AiError("ЖИ-ге қосылу мүмкін болмады. Интернетті тексеріп, қайта көріңіз.", String(e));
+    }
+    if (res.status !== 503 || attempt === 2) break;
+    await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
   }
   if (res.status === 429) throw new AiError("ЖИ қазір бос емес (сұрау шегі). Бір минуттан кейін қайта көріңіз.", await res.text());
   if (res.status === 401 || res.status === 403) throw new AiError("ЖИ кілті жарамсыз. Әкімші кілтті тексеруі керек.", `${res.status} ${await res.text()}`);
