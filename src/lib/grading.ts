@@ -84,3 +84,17 @@ export function levelFor(points: number) {
 
 /** Points ("ашылым") awarded per activity. */
 export const POINTS = { olen: 5, charMap: 8, egerde: 10, zheli: 8, assignment: 10, creative: 10 } as const;
+
+/** Teacher-facing answer key in words instead of raw JSON ("[3,2,1,0]" → "D → C → B → A"). */
+export function answerText(task: Pick<Task, "type" | "answer_key" | "options">): string {
+  const k = task.answer_key;
+  const opt = (i: number) => task.options[i] ?? `№${i + 1}`;
+  switch (task.type) {
+    case "single_choice": return typeof k === "number" ? opt(k) : "—";
+    case "multiple_choice": return Array.isArray(k) ? (k as number[]).map(opt).join("; ") : "—";
+    case "ordering": return Array.isArray(k) ? (k as number[]).map(opt).join(" → ") : "—";
+    case "fill_blank": return Array.isArray(k) ? (k as string[]).join(" / ") : "—";
+    case "matching": return k && typeof k === "object" && !Array.isArray(k) ? Object.entries(k).map(([a, b]) => `${a} — ${b}`).join("; ") : "—";
+    default: return "Ашық жауап: критерий бойынша бағаланады";
+  }
+}

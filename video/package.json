@@ -5,7 +5,7 @@
     "music": "tsx scripts/music.ts",
     "capture": "node capture.mjs",
     "studio": "remotion studio",
-    "render": "tsx scripts/music.ts 105 && remotion render Promo out/adebietlab.mp4"
+    "render": "tsx scripts/sfx.ts && tsx scripts/music.ts 135 && remotion render Promo out/adebietlab.mp4"
   },
   "dependencies": {
     "@remotion/cli": "4.0.547",

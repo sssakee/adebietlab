@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { teacherClasses } from "@/lib/teacher";
 import { TASK_TYPE_LABEL } from "@/lib/ai/schemas";
+import { answerText } from "@/lib/grading";
 import type { DbTask } from "@/components/TaskFields";
 import { approveSet, assignSet, deleteTask } from "../../actions";
 import { EditTask } from "./EditTask";
@@ -59,7 +60,7 @@ export default async function SetPage({ params }: PageProps<"/mugalim/bank/[id]"
                 {t.options.map((o, j) => <li key={j}>{o}</li>)}
               </ul>
             )}
-            <p className="mt-2 text-sm"><b>Дұрыс жауап:</b> <code className="rounded bg-soft px-1.5">{JSON.stringify(t.answer_key)}</code></p>
+            <p className="mt-2 text-sm"><b>Дұрыс жауап:</b> {answerText(t)}</p>
             <p className="mt-1 text-sm"><b>Критерий:</b> {t.criteria}</p>
             {draft && <EditTask setId={id} task={t} />}
           </li>
