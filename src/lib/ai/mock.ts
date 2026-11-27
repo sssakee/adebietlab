@@ -1,6 +1,6 @@
 // Deterministic stand-ins for the AI when AI_MOCK=true (no API key needed).
 // They derive tasks from the material with simple rules, so the demo still reflects the input.
-import type { Feedback, Generation, Task } from "./schemas";
+import type { Feedback, Generation, Task, WordExplanation } from "./schemas";
 import type { AiMode } from "./prompts/chat";
 
 const DISTRACTORS = ["ғарыш", "компьютер", "мұхит", "пойыз", "телефон"];
@@ -105,4 +105,9 @@ export function mockChat(mode: Exclude<AiMode, "off">, question: string, title?:
   if (q.includes("бастаймын") || q.includes("тапсырма"))
     return `Тапсырманың шартын қайта оқып, ондағы негізгі етістікті (сипатта, салыстыр, дәлелде) тап. Сосын мәтіннен соған қатысты бір үзінді белгіле. Қай қадамнан бастағың келеді?`;
   return `Қызық сұрақ! ${about} осыған қатысты қандай жерді байқадың? Алдымен өз болжамыңды айтшы, сосын бірге тексереміз. (Демо режим: бұл ЖИ-сіз дайын жауап.)`;
+}
+
+/** Demo mode has no dictionary behind it, so it says so instead of inventing a meaning. */
+export function mockWord(word: string): WordExplanation {
+  return { known: true, meaning: `Демо режим: «${word}» сөзінің шын түсіндірмесін ЖИ кілті қосылғанда көресің.`, example: "" };
 }

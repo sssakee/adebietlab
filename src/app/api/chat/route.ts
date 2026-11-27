@@ -6,13 +6,8 @@ import { chatSystem } from "@/lib/ai/prompts/chat";
 import { mockChat } from "@/lib/ai/mock";
 import { resolveContext } from "@/lib/chat-context";
 import { checkMessage } from "@/lib/safety";
+import { aiUsedToday as usedToday, logAiRequest, STUDENT_LIMIT as LIMIT } from "@/lib/ai-quota";
 
-const LIMIT = Number(process.env.AI_DAILY_LIMIT_STUDENT ?? 30);
-
-async function usedToday(userId: string) {
-  const [r] = await sql`select requests from ai_usage where user_id = ${userId} and day = current_date`;
-  return (r?.requests as number) ?? 0;
-}
 
 const text = (message: string, status: number) => Response.json({ error: message }, { status });
 
@@ -51,8 +46,7 @@ export async function POST(req: Request) {
   if (ctx.mode === "off") return text("Бұл тапсырмада мұғалім ЖИ көмекшісін өшірген.", 403);
   if ((await usedToday(user.id)) >= LIMIT) return text(`Бүгінгі ${LIMIT} сұрақ шегі бітті. Ертең қайта кел!`, 429);
 
-  await sql`insert into ai_usage (user_id, requests) values (${user.id}, 1)
-    on conflict (user_id, day) do update set requests = ai_usage.requests + 1`;
+  await logAiRequest(user.id);
   if (ctx.assignmentId)
     await sql`insert into ai_hints values (${ctx.assignmentId}, ${user.id}) on conflict do nothing`;
 

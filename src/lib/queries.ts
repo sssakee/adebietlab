@@ -180,3 +180,8 @@ export const weeklyRating = cache(async (classId: string | null) => {
   let place = 0;
   return rows.map((r, i): RatingRow => ({ ...r, place: i > 0 && rows[i - 1].pts === r.pts ? place : (place = i + 1) }));
 });
+
+export type SavedWord = { word: string; meaning: string; source: string };
+export const myWords = cache(
+  (studentId: string) => sql<SavedWord[]>`select word, meaning, source from words where student_id = ${studentId} order by added_at desc`,
+);

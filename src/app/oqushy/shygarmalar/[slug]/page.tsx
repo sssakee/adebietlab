@@ -5,6 +5,8 @@ import { requireRole } from "@/lib/auth";
 import { getWork } from "@/lib/queries";
 import { ToolLinks } from "@/components/ToolLinks";
 import { SplitText } from "@/components/SplitText";
+import { Glossed } from "@/components/Glossed";
+import { glossParts } from "@/lib/glossary";
 
 export async function generateMetadata({ params }: PageProps<"/oqushy/shygarmalar/[slug]">) {
   const w = await getWork((await params).slug);
@@ -15,6 +17,7 @@ export default async function WorkPage({ params }: PageProps<"/oqushy/shygarmala
   await requireRole("student");
   const w = await getWork((await params).slug);
   if (!w) notFound();
+  const glossed = [w.summary, w.text].some((t) => t && glossParts(t).some((p) => typeof p !== "string"));
   const tools = (["olen", "char_map", "egerde", "zheli"] as const).filter((t) => ({ olen: w.lab.poem, char_map: w.lab.characters, egerde: w.lab.egerde, zheli: w.lab.timeline })[t]);
 
   return (
@@ -41,14 +44,25 @@ export default async function WorkPage({ params }: PageProps<"/oqushy/shygarmala
               <dt className="font-bold text-muted">Жанры</dt>
               <dd>{w.genre}</dd>
             </dl>
-            {w.summary && <p className="mt-4">{w.summary}</p>}
+            {w.summary && (
+              <p className="mt-4 leading-relaxed">
+                <Glossed text={w.summary} />
+              </p>
+            )}
+            {glossed && (
+              <p className="mt-3 text-sm text-muted">
+                Астын нүктемен сызған сөзді бас: түсіндірмесі шығады, оны <Link href="/oqushy/sozdik" className="font-bold text-primary underline">сөздігіңе</Link> қосуға болады.
+              </p>
+            )}
           </section>
 
           <section className="card" aria-labelledby="text">
             <h2 id="text" className="mb-3 text-xl font-bold">Мәтін</h2>
             {w.text ? (
               <>
-                <p className="whitespace-pre-line text-lg leading-relaxed">{w.text}</p>
+                <p className="whitespace-pre-line text-lg leading-relaxed">
+                  <Glossed text={w.text} />
+                </p>
                 {w.text_source && <p className="mt-4 text-sm text-muted">Дереккөзі: {w.text_source}</p>}
               </>
             ) : (

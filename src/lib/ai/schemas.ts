@@ -50,3 +50,10 @@ export const FeedbackSchema = z.object({
   feedback: z.string().min(3),
 });
 export type Feedback = z.infer<typeof FeedbackSchema>;
+
+export const WordSchema = z.object({
+  known: z.boolean(),
+  meaning: z.string().max(400).default(""),
+  example: z.string().max(300).default(""),
+});
+export type WordExplanation = z.infer<typeof WordSchema>;

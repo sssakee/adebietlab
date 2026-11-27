@@ -243,6 +243,13 @@
 @utility label {
   @apply mb-1.5 block text-sm font-bold text-ink;
 }
+/* A school-dictionary word inside text: looks like text, reads as pressable. */
+@utility gloss {
+  @apply cursor-pointer rounded-sm underline decoration-primary decoration-dotted decoration-2 underline-offset-4;
+  &:hover {
+    @apply bg-accent-soft;
+  }
+}
 @utility tag {
   @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-bold;
 }

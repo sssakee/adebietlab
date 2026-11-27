@@ -5,19 +5,14 @@ import mammoth from "mammoth";
 import { requireRole } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { joinCode } from "@/lib/password";
-import { AiError, generateJson, isMock, type Usage } from "@/lib/ai";
+import { AiError, generateJson, isMock } from "@/lib/ai";
+import { logAiRequest as logUsage } from "@/lib/ai-quota";
 import { mockFeedback, mockGenerate } from "@/lib/ai/mock";
 import { FeedbackSchema, GenerationSchema, TaskSchema, type Task } from "@/lib/ai/schemas";
 import { GENERATE_TASKS_SYSTEM, generateTasksUser } from "@/lib/ai/prompts/generate-tasks";
 import { FEEDBACK_SYSTEM, feedbackUser } from "@/lib/ai/prompts/feedback";
 
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
-
-async function logUsage(userId: string, u: Usage) {
-  await sql`insert into ai_usage (user_id, requests, input_tokens, output_tokens) values (${userId}, 1, ${u.input_tokens}, ${u.output_tokens})
-    on conflict (user_id, day) do update set requests = ai_usage.requests + 1,
-      input_tokens = ai_usage.input_tokens + excluded.input_tokens, output_tokens = ai_usage.output_tokens + excluded.output_tokens`;
-}
 
 /** Throws unless the class belongs to this teacher. */
 async function ownClass(teacherId: string, classId: string) {

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AudioLines, GitBranch, Image as ImageIcon, Repeat, TrendingUp, Waypoints, type LucideIcon } from "lucide-react";
+import { AudioLines, BookA, GitBranch, Hourglass, Image as ImageIcon, MapPinned, Repeat, TrendingUp, Waypoints, type LucideIcon } from "lucide-react";
 
 type ToolCard = { href: string; title: string; text: string; icon: LucideIcon; color: string };
 
@@ -14,6 +14,13 @@ const TOOLS: ToolCard[] = [
 export const MORE_TOOLS: ToolCard[] = [
   { href: "/oqushy/zhattau", title: "Жаттау режимі", text: "Өлең сөздері деңгей сайын жасырылады, сен жадыңнан жазасың.", icon: Repeat, color: "bg-magenta" },
   { href: "/oqushy/kartochka", title: "Цитата карточкасы", text: "Ұнаған жолды әдемі суретке айналдырып, бөліс.", icon: ImageIcon, color: "bg-navy" },
+];
+
+/** Reference pages: where the authors came from, how literature grew, what old words mean. */
+export const WORLD_TOOLS: ToolCard[] = [
+  { href: "/oqushy/adebi-karta", title: "Әдеби карта", text: "Ақын-жазушылар мен шығармалар туған жеріне қарай Қазақстан картасында.", icon: MapPinned, color: "bg-green-ink" },
+  { href: "/oqushy/tarih", title: "Әдебиет тарихы", text: "Көне жазбалардан бүгінге дейін: дәуір сайын кім жазды.", icon: Hourglass, color: "bg-violet" },
+  { href: "/oqushy/sozdik", title: "Сөздік", text: "Көнерген, сирек сөздердің түсіндірмесі және сенің жеке сөздігің.", icon: BookA, color: "bg-primary" },
 ];
 
 export function ToolGrid({ tools = TOOLS }: { tools?: ToolCard[] }) {
