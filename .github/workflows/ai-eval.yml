@@ -11,6 +11,10 @@ on:
         type: choice
         options: [ai-eval, works]
         default: ai-eval
+      model:
+        description: Модель (сайттағы AI_MODEL-мен бірдей болғаны дұрыс)
+        type: string
+        default: gemini-flash-lite-latest
 permissions:
   contents: write
 jobs:
@@ -29,7 +33,7 @@ jobs:
           SCRIPT: ${{ inputs.suite == 'works' && 'ai:works' || 'ai:eval' }}
           AI_PROVIDER: gemini
           # Flash has only 20 free requests a day and timed out under load; Flash-Lite is faster with its own quota.
-          AI_MODEL: gemini-flash-lite-latest
+          AI_MODEL: ${{ inputs.model || 'gemini-flash-lite-latest' }}
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
       - name: Нәтижені сақтау
         run: |
