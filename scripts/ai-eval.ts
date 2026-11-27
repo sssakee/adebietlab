@@ -267,12 +267,21 @@ async function main() {
   const provider = isMock() ? "AI_MOCK (ережемен)" : `${process.env.AI_PROVIDER?.trim()} / ${process.env.AI_MODEL?.trim()}`;
   const rows: string[] = [];
   for (const [i, c] of cases.entries()) {
-    let r: { actual: string; pass: boolean | null };
-    try {
-      r = await c.run();
-    } catch (e) {
-      r = { actual: `ҚАТЕ: ${e instanceof Error ? e.message : e}`, pass: false };
+    let r: { actual: string; pass: boolean | null } | undefined;
+    // The free tier allows 15 requests a minute; one retry after the minute passes keeps the run honest.
+    for (let attempt = 0; !r; attempt++) {
+      try {
+        r = await c.run();
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (attempt === 0 && /per minute|PerMinute/i.test(msg)) {
+          await new Promise((res) => setTimeout(res, 60_000));
+          continue;
+        }
+        r = { actual: `ҚАТЕ: ${msg.slice(0, 200)}`, pass: false };
+      }
     }
+    if (!isMock()) await new Promise((res) => setTimeout(res, 4_500));
     const verdict = r.pass === null ? "қолмен бағалау" : r.pass ? "✓ өтті" : "✗ өтпеді";
     console.log(`${i + 1}. ${c.name}: ${verdict}`);
     rows.push(`| ${i + 1} | ${c.kind} | ${c.name} | ${c.expected} | ${r.actual.replace(/\|/g, "/").replace(/\n/g, " ")} | ${verdict} |`);
