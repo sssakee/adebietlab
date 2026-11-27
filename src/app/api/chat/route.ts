@@ -3,7 +3,8 @@ import { getUser } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { AiError, isMock, streamChat, streamText } from "@/lib/ai";
 import { chatSystem } from "@/lib/ai/prompts/chat";
-import { mockChat } from "@/lib/ai/mock";
+import { personaSystem } from "@/lib/ai/prompts/persona";
+import { mockChat, mockPersona } from "@/lib/ai/mock";
 import { resolveContext } from "@/lib/chat-context";
 import { checkMessage } from "@/lib/safety";
 import { aiUsedToday as usedToday, logAiRequest, STUDENT_LIMIT as LIMIT } from "@/lib/ai-quota";
@@ -51,10 +52,11 @@ export async function POST(req: Request) {
     await sql`insert into ai_hints values (${ctx.assignmentId}, ${user.id}) on conflict do nothing`;
 
   const headers = { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" };
-  if (isMock()) return new Response(streamText(mockChat(ctx.mode, last.content, ctx.title)), { headers });
+  if (isMock())
+    return new Response(streamText(ctx.persona ? mockPersona(ctx.persona.name) : mockChat(ctx.mode, last.content, ctx.title)), { headers });
 
   try {
-    const stream = await streamChat(chatSystem(ctx.mode, ctx), history, (u) => {
+    const stream = await streamChat(ctx.persona ? personaSystem(ctx.persona) : chatSystem(ctx.mode, ctx), history, (u) => {
       void sql`update ai_usage set input_tokens = input_tokens + ${u.input_tokens}, output_tokens = output_tokens + ${u.output_tokens}
         where user_id = ${user.id} and day = current_date`.catch(() => {});
     });

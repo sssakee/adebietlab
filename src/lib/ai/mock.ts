@@ -111,3 +111,7 @@ export function mockChat(mode: Exclude<AiMode, "off">, question: string, title?:
 export function mockWord(word: string): WordExplanation {
   return { known: true, meaning: `Демо режим: «${word}» сөзінің шын түсіндірмесін ЖИ кілті қосылғанда көресің.`, example: "" };
 }
+
+export function mockPersona(name: string): string {
+  return `Сәлем! Мен — ${name}. (Демо режим: бұл ЖИ-сіз дайын жауап. ЖИ кілті қосылғанда мен шығарманың мазмұнына сүйеніп, сұрағыңа өз атымнан жауап беремін.) Ал сен шығармадағы қай оқиғаны есте сақтадың?`;
+}

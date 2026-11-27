@@ -4,9 +4,8 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Send, X } from "lucide-react";
-import { sfx } from "./Sfx";
+import { useChat } from "./useChat";
 
-type Msg = { role: "user" | "assistant"; content: string };
 type Info = { mode: "off" | "limited" | "full"; title: string | null; remaining: number };
 
 const QUICK = ["Бұл сөздің мағынасы не?", "Кейіпкер туралы түсіндірші", "Тапсырманы қалай бастаймын?"];
@@ -16,10 +15,9 @@ export function ChatWidget() {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const [info, setInfo] = useState<Info | null>(null);
-  const [msgs, setMsgs] = useState<Msg[]>([]);
-  const [input, setInput] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const { msgs, setMsgs, input, setInput, busy, error, setError, send } = useChat(path, () =>
+    setInfo((i) => i && { ...i, remaining: Math.max(0, i.remaining - 1) }),
+  );
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -54,47 +52,8 @@ export function ChatWidget() {
   }, [open]);
 
   const off = info?.mode === "off";
-
-  async function send(text: string) {
-    const q = text.trim();
-    if (!q || busy) return;
-    setError("");
-    const next: Msg[] = [...msgs, { role: "user", content: q }];
-    setMsgs([...next, { role: "assistant", content: "" }]);
-    setInput("");
-    setBusy(true);
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path, messages: next }),
-      });
-      if (!res.ok || !res.body) {
-        const j = await res.json().catch(() => ({}));
-        setMsgs(next.slice(0, -1));
-        setInput(q);
-        setError(j.error ?? "Қате шықты. Қайта көр.");
-        sfx.no();
-        return;
-      }
-      const reader = res.body.getReader();
-      const dec = new TextDecoder();
-      let acc = "";
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        acc += dec.decode(value, { stream: true });
-        setMsgs([...next, { role: "assistant", content: acc }]);
-      }
-      setInfo((i) => i && { ...i, remaining: Math.max(0, i.remaining - 1) });
-      sfx.step();
-    } catch {
-      setMsgs(next.slice(0, -1));
-      setError("Желі қатесі. Интернетті тексеріп, қайта көр.");
-    } finally {
-      setBusy(false);
-    }
-  }
+  // the interview page has its own conversation in the page itself
+  if (path.startsWith("/oqushy/suhbat/")) return null;
 
   return (
     <>

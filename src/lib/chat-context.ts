@@ -2,12 +2,23 @@ import "server-only";
 import { sql } from "./db";
 import type { User } from "./auth";
 import type { AiMode } from "./ai/prompts/chat";
+import type { PersonaContext } from "./ai/prompts/persona";
 import { getWork, TOOL_LABEL } from "./queries";
+import { CHARACTERS } from "./characters";
+import { findSpeaker } from "./personas";
 
-export type ChatContext = { mode: AiMode; assignmentId?: string; title?: string; text?: string; tool?: string; task?: string };
+export type ChatContext = { mode: AiMode; assignmentId?: string; title?: string; text?: string; tool?: string; task?: string; persona?: PersonaContext };
 
 /** Works out what the student is looking at from the page path, and the AI mode the teacher set for it. */
 export async function resolveContext(user: User, path: string): Promise<ChatContext> {
+  const talk = path.match(/^\/oqushy\/suhbat\/([a-z0-9-]+)/);
+  const speaker = talk && findSpeaker(talk[1]);
+  if (speaker) {
+    const works = (await Promise.all(speaker.works.map((s) => getWork(s)))).filter((w) => w !== null);
+    const cast = speaker.works.length === 1 ? (CHARACTERS[speaker.works[0]] ?? []) : [];
+    return { mode: "full", title: speaker.name, persona: { ...speaker, cast, works } };
+  }
+
   const task = path.match(/^\/oqushy\/tapsyrmalar\/([0-9a-f-]{36})/);
   if (task && user.class_id) {
     const [a] = await sql<{ id: string; ai_mode: AiMode; set_title: string | null; slug: string | null }[]>`

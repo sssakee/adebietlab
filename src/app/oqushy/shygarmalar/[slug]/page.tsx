@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ExternalLink, Info } from "lucide-react";
+import { ArrowLeft, ExternalLink, Info, MessagesSquare } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { getWork } from "@/lib/queries";
 import { ToolLinks } from "@/components/ToolLinks";
 import { SplitText } from "@/components/SplitText";
 import { Glossed } from "@/components/Glossed";
 import { glossParts } from "@/lib/glossary";
+import { ABAI, SPEAKERS } from "@/lib/personas";
 
 export async function generateMetadata({ params }: PageProps<"/oqushy/shygarmalar/[slug]">) {
   const w = await getWork((await params).slug);
@@ -18,6 +19,7 @@ export default async function WorkPage({ params }: PageProps<"/oqushy/shygarmala
   const w = await getWork((await params).slug);
   if (!w) notFound();
   const glossed = [w.summary, w.text].some((t) => t && glossParts(t).some((p) => typeof p !== "string"));
+  const talk = ABAI.works.includes(w.slug) ? ABAI : SPEAKERS.find((s) => s.works[0] === w.slug);
   const tools = (["olen", "char_map", "egerde", "zheli"] as const).filter((t) => ({ olen: w.lab.poem, char_map: w.lab.characters, egerde: w.lab.egerde, zheli: w.lab.timeline })[t]);
 
   return (
@@ -88,6 +90,15 @@ export default async function WorkPage({ params }: PageProps<"/oqushy/shygarmala
             <ToolLinks slug={w.slug} tools={tools} />
           ) : (
             <p className="text-muted">Бұл шығармаға зертхана құралдары әлі дайындалмаған.</p>
+          )}
+          {talk && (
+            <Link href={talk === ABAI ? "/oqushy/suhbat/abai" : `/oqushy/suhbat#${w.slug}`} data-nav="forward" className="mt-4 flex items-center gap-3 rounded-2xl bg-soft p-4 font-bold hover:bg-accent-soft">
+              <MessagesSquare className="size-5 shrink-0 text-red" aria-hidden="true" />
+              <span>
+                Кейіпкермен сұхбат
+                <span className="block text-sm font-medium text-muted">{talk === ABAI ? "Абайдың өзіне сұрақ қой" : `${talk.name} және басқалар`}</span>
+              </span>
+            </Link>
           )}
         </aside>
       </div>

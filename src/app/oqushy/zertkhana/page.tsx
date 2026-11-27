@@ -1,7 +1,7 @@
 import { requireRole } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import type { WorkLab } from "@/lib/queries";
-import { MORE_TOOLS, ToolGrid, WORLD_TOOLS } from "@/components/ToolGrid";
+import { AI_TOOLS, MORE_TOOLS, ToolGrid, WORLD_TOOLS } from "@/components/ToolGrid";
 import { ToolLinks, type Tool } from "@/components/ToolLinks";
 import { PageHead } from "@/components/PageHead";
 import { QUOTES } from "@/lib/quotes";
@@ -21,6 +21,10 @@ export default async function Lab() {
       <section aria-labelledby="more">
         <h2 id="more" className="mb-4 text-2xl font-bold">Жаттау және бөлісу</h2>
         <ToolGrid tools={MORE_TOOLS} />
+      </section>
+      <section aria-labelledby="with-ai">
+        <h2 id="with-ai" className="mb-4 text-2xl font-bold">ЖИ-мен бірге</h2>
+        <ToolGrid tools={AI_TOOLS} />
       </section>
       <section aria-labelledby="world">
         <h2 id="world" className="mb-4 text-2xl font-bold">Әдебиет әлемі</h2>
