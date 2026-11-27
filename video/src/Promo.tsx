@@ -352,10 +352,19 @@ export const promoLength = () => SCENES.reduce((s, x) => s + lengthOf(x), 0) - T
 /** Frame where each scene starts, for laying the voiceover over the cut. */
 const starts = SCENES.reduce<number[]>((acc, s, i) => [...acc, i === 0 ? 0 : acc[i - 1] + lengthOf(SCENES[i - 1]) - T], []);
 
+const voParts = SCENES.flatMap((s, i) => (voLen[s.id] ? [{ id: s.id, from: starts[i] + (i === 0 ? 8 : T), to: starts[i] + (i === 0 ? 8 : T) + voLen[s.id] * FPS }] : []));
+
+/** Music sits under the voice and comes up a little in the gaps between lines. */
+function music(fr: number, total: number) {
+  const talking = voParts.some((p) => fr >= p.from - 8 && fr <= p.to + 4);
+  const near = Math.min(...voParts.map((p) => (fr < p.from ? p.from - fr : fr > p.to ? fr - p.to : 0)), 99);
+  const bed = voParts.length ? (talking ? 0.2 : interpolate(near, [4, 20], [0.2, 0.42], { extrapolateRight: "clamp" })) : 0.6;
+  return bed * interpolate(fr, [0, 20, total - 90, total], [0, 1, 1, 0], { extrapolateRight: "clamp" });
+}
+
 export function Promo() {
   useFonts();
   const total = promoLength();
-  const hasVo = Object.keys(voLen).length > 0;
   return (
     <AbsoluteFill style={{ background: C.navyDeep }}>
       <TransitionSeries>
@@ -370,10 +379,10 @@ export function Promo() {
           ];
         })}
       </TransitionSeries>
-      <Audio src={staticFile("music.wav")} volume={(fr) => interpolate(fr, [0, 20, total - 90, total], [0, hasVo ? 0.22 : 0.6, hasVo ? 0.22 : 0.6, 0], { extrapolateRight: "clamp" })} />
-      {SCENES.filter((s) => voLen[s.id]).map((s) => (
-        <Sequence key={s.id} from={starts[SCENES.indexOf(s)] + (s.id === "01" ? 8 : T)}>
-          <Audio src={staticFile(`vo/vo-${s.id}.mp3`)} />
+      <Audio src={staticFile("music.wav")} volume={(fr) => music(fr, total)} />
+      {voParts.map(({ id, from }) => (
+        <Sequence key={id} from={from}>
+          <Audio src={staticFile(`vo/vo-${id}.mp3`)} />
         </Sequence>
       ))}
       <Progress total={total} />

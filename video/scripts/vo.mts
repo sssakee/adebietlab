@@ -1,4 +1,4 @@
-// Voiceover with ElevenLabs (Eleven v3, Kazakh): npx tsx scripts/vo.ts [voiceId]
+// Voiceover with ElevenLabs (Eleven v3, Kazakh): npx tsx scripts/vo.mts [voiceId]
 // Reads the lines from voiceover.md, writes public/vo/vo-XX.mp3 and src/vo.json (seconds per scene).
 // The key comes from ELEVENLABS_API_KEY, or the environment's network secret adds the header itself.
 import { execFileSync } from "node:child_process";
@@ -8,7 +8,7 @@ const API = "https://api.elevenlabs.io/v1";
 const headers: Record<string, string> = { "content-type": "application/json" };
 if (process.env.ELEVENLABS_API_KEY) headers["xi-api-key"] = process.env.ELEVENLABS_API_KEY;
 const voice = process.argv[2] ?? process.env.VOICE_ID;
-if (!voice) throw new Error("Дауыс id-ін беріңіз: npx tsx scripts/vo.ts <voiceId>");
+if (!voice) throw new Error("Дауыс id-ін беріңіз: npx tsx scripts/vo.mts <voiceId>");
 const only = process.argv[3]; // optional: one scene id to redo
 
 const root = new URL("..", import.meta.url).pathname;
@@ -18,7 +18,7 @@ const durations: Record<string, number> = JSON.parse(readFileSync(root + "src/vo
 
 for (const [id, text] of lines) {
   if (only && id !== only) continue;
-  const res = await fetch(`${API}/text-to-speech/${voice}?output_format=mp3_44100_192`, {
+  const res = await fetch(`${API}/text-to-speech/${voice}?output_format=mp3_44100_128`, {
     method: "POST", headers,
     body: JSON.stringify({ text, model_id: "eleven_v3", language_code: "kk", voice_settings: { stability: 0.4, similarity_boost: 0.8 } }),
   });
