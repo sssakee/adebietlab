@@ -9,6 +9,7 @@ import { Mascot } from "@/components/Mascot";
 import { Ornament } from "@/components/Ornament";
 import { Ring } from "@/components/Ring";
 import { Quote } from "@/components/Quote";
+import { ReadingPlan } from "@/components/ReadingPlan";
 
 export const metadata = { title: "Басты бет" };
 
@@ -111,6 +112,8 @@ export default async function StudentHome() {
             </p>
           </div>
         </section>
+
+        <ReadingPlan studentId={u.id} />
 
         <section className="card" aria-labelledby="disc">
           <h2 id="disc" className="mb-4 text-xl font-bold">Менің ашылымдарым</h2>

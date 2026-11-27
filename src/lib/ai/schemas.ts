@@ -57,3 +57,15 @@ export const WordSchema = z.object({
   example: z.string().max(300).default(""),
 });
 export type WordExplanation = z.infer<typeof WordSchema>;
+
+export const PlanSchema = z.object({
+  picks: z.array(z.object({ slug: z.string(), why: z.string().min(5).max(400), step: z.string().min(5).max(300) })).min(1).max(3),
+  note: z.string().max(300).default(""),
+});
+
+export const CreativeSchema = z.object({
+  scores: z.array(z.number().int().min(0).max(2)).length(3),
+  comment: z.string().min(5).max(800),
+  tip: z.string().max(400).default(""),
+});
+export type CreativeFeedback = z.infer<typeof CreativeSchema>;

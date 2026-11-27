@@ -1,6 +1,6 @@
 // Deterministic stand-ins for the AI when AI_MOCK=true (no API key needed).
 // They derive tasks from the material with simple rules, so the demo still reflects the input.
-import type { Feedback, Generation, Task, WordExplanation } from "./schemas";
+import type { CreativeFeedback, Feedback, Generation, Task, WordExplanation } from "./schemas";
 import type { AiMode } from "./prompts/chat";
 
 const DISTRACTORS = ["ғарыш", "компьютер", "мұхит", "пойыз", "телефон"];
@@ -114,4 +114,13 @@ export function mockWord(word: string): WordExplanation {
 
 export function mockPersona(name: string): string {
   return `Сәлем! Мен — ${name}. (Демо режим: бұл ЖИ-сіз дайын жауап. ЖИ кілті қосылғанда мен шығарманың мазмұнына сүйеніп, сұрағыңа өз атымнан жауап беремін.) Ал сен шығармадағы қай оқиғаны есте сақтадың?`;
+}
+
+export function mockCreative(text: string): CreativeFeedback {
+  const n = text.split(/\s+/).filter(Boolean).length;
+  return {
+    scores: n < 40 ? [1, 1, 1] : [2, 1, 2],
+    comment: `Демо режим: бұл ЖИ-сіз ережемен берілген пікір. Жұмысың ${n} сөзден тұрады${n < 40 ? ", ойыңды кеңейтуге болады" : ", ойың толық жазылған"}.`,
+    tip: "Кейіпкердің бір сөзін не ісін мысалға алып, ойыңды дәлелде.",
+  };
 }

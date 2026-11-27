@@ -5,6 +5,7 @@ import { pickClass } from "@/lib/teacher";
 import { ClassPicker } from "../ClassPicker";
 import { PageHead } from "@/components/PageHead";
 import { Bars, type Bar } from "@/components/Bars";
+import { groupSkills, scored as scoredRows } from "@/lib/skills";
 
 export const metadata = { title: "Сынып аналитикасы" };
 
@@ -22,24 +23,7 @@ export default async function Analytics({ searchParams }: PageProps<"/mugalim/an
       </div>
     );
 
-  // Every score as (what, got, max): tasks per task, quizzes, lab tools and teacher-scored creative work.
-  const scored = sql`
-    with st as (select student_id from class_members where class_id = ${cls.id})
-    select ts.work_id, t.id::text as task, t.type as skill, s.student_id,
-      coalesce((s.auto_scores || s.teacher_scores)->>t.id::text, '0')::int as got, t.points as max
-    from submissions s join assignments a on a.id = s.assignment_id join task_sets ts on ts.id = a.set_id join tasks t on t.set_id = ts.id
-    where a.class_id = ${cls.id} and s.student_id in (select * from st) and (t.type <> 'open' or s.teacher_scores ? t.id::text)
-    union all
-    select w.id, null, 'quiz', q.student_id, q.best, q.total
-    from quiz_results q left join works w on w.slug = q.quiz where q.student_id in (select * from st)
-    union all
-    select l.work_id, null, l.kind, l.student_id,
-      case l.kind when 'olen' then (l.result->>'meter_ok')::boolean::int + (l.result->>'rhyme_ok')::boolean::int
-                  when 'char_map' then (l.result->>'found')::int when 'zheli' then (l.result->>'orderOk')::int
-                  else (select sum(x) from unnest(l.teacher_scores) x)::int end,
-      case l.kind when 'olen' then 2 when 'char_map' then (l.result->>'total')::int when 'zheli' then (l.result->>'total')::int else 6 end
-    from lab_works l
-    where l.student_id in (select * from st) and (l.kind in ('olen', 'char_map', 'zheli') or l.teacher_scores is not null)`;
+  const scored = scoredRows(sql`select student_id from class_members where class_id = ${cls.id}`, cls.id);
 
   const [students, byWork, bySkill, hardest] = await Promise.all([
     sql<Student[]>`
@@ -76,21 +60,7 @@ export default async function Analytics({ searchParams }: PageProps<"/mugalim/an
       group by t.id, t.prompt having sum(got) < sum(max) order by pct, n desc limit 5`,
   ]);
 
-  // Task types and tools grouped into what they test, in the teacher's words.
-  const SKILL: Record<string, string> = {
-    single_choice: "Мазмұнды білу", multiple_choice: "Мазмұнды білу", fill_blank: "Мазмұнды білу", quiz: "Мазмұнды білу",
-    ordering: "Оқиға реті мен құрылым", zheli: "Оқиға реті мен құрылым",
-    matching: "Байланыс табу", char_map: "Байланыс табу",
-    olen: "Өлең құрылысы",
-    open: "Өз ойын жазу", egerde: "Шығармашылық ой", soni: "Шығармашылық ой", hat: "Шығармашылық ой",
-  };
-  const skills = new Map<string, { got: number; max: number; n: number }>();
-  for (const s of bySkill) {
-    const k = SKILL[s.skill] ?? s.skill;
-    const v = skills.get(k) ?? { got: 0, max: 0, n: 0 };
-    skills.set(k, { got: v.got + s.pct * s.n, max: v.max + 100 * s.n, n: v.n + s.n });
-  }
-  const skillBars: Bar[] = [...skills].map(([label, v]) => ({ label, pct: Math.round((100 * v.got) / v.max), n: v.n })).sort((a, b) => a.pct - b.pct);
+  const skillBars: Bar[] = groupSkills(bySkill);
 
   const why = (s: Student) =>
     [

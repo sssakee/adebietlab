@@ -83,4 +83,4 @@ export function levelFor(points: number) {
 }
 
 /** Points ("ашылым") awarded per activity. */
-export const POINTS = { olen: 5, charMap: 8, egerde: 10, zheli: 8, assignment: 10 } as const;
+export const POINTS = { olen: 5, charMap: 8, egerde: 10, zheli: 8, assignment: 10, creative: 10 } as const;

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ExternalLink, Info, MessagesSquare } from "lucide-react";
+import { ArrowLeft, ExternalLink, Info, MessagesSquare, PenLine } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { getWork } from "@/lib/queries";
 import { ToolLinks } from "@/components/ToolLinks";
@@ -8,6 +8,7 @@ import { SplitText } from "@/components/SplitText";
 import { Glossed } from "@/components/Glossed";
 import { glossParts } from "@/lib/glossary";
 import { ABAI, SPEAKERS } from "@/lib/personas";
+import { CHARACTERS } from "@/lib/characters";
 
 export async function generateMetadata({ params }: PageProps<"/oqushy/shygarmalar/[slug]">) {
   const w = await getWork((await params).slug);
@@ -97,6 +98,15 @@ export default async function WorkPage({ params }: PageProps<"/oqushy/shygarmala
               <span>
                 Кейіпкермен сұхбат
                 <span className="block text-sm font-medium text-muted">{talk === ABAI ? "Абайдың өзіне сұрақ қой" : `${talk.name} және басқалар`}</span>
+              </span>
+            </Link>
+          )}
+          {CHARACTERS[w.slug] && (
+            <Link href={`/oqushy/shygarmashylyq/${w.slug}`} data-nav="forward" className="mt-3 flex items-center gap-3 rounded-2xl bg-soft p-4 font-bold hover:bg-accent-soft">
+              <PenLine className="size-5 shrink-0 text-magenta" aria-hidden="true" />
+              <span>
+                Шығармашылық зертхана
+                <span className="block text-sm font-medium text-muted">Соңын өзгерт не кейіпкерге хат жаз</span>
               </span>
             </Link>
           )}

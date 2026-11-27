@@ -5,7 +5,14 @@ import { requireRole } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { compareMap, compareTimeline, PLOT_ELEMENTS, POINTS, scoreTask, type Answer, type Edge } from "@/lib/grading";
 import { addPoints, getWork } from "@/lib/queries";
-import type { Task } from "@/lib/ai/schemas";
+import { CreativeSchema, type Task } from "@/lib/ai/schemas";
+import { AiError, generateJson, isMock } from "@/lib/ai";
+import { CREATIVE_SYSTEM, creativeUser } from "@/lib/ai/prompts/creative";
+import { mockCreative } from "@/lib/ai/mock";
+import { aiUsedToday, logAiRequest, STUDENT_LIMIT } from "@/lib/ai-quota";
+import { CHARACTERS } from "@/lib/characters";
+import { CRITERIA, KIND, MIN_WORDS, words, type CreativeKind } from "@/lib/creative";
+import { checkMessage } from "@/lib/safety";
 
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 
@@ -155,4 +162,53 @@ export async function checkZheli(slug: string, order: string[], elements: Record
   if (perfect(result) && !perfect(prev)) await addPoints(u.id, POINTS.zheli, `zheli:${slug}`);
   revalidatePath("/oqushy");
   return result;
+}
+
+// ---------- creative lab ----------
+
+export type CreativeState = { ok?: string; error?: string } | undefined;
+
+export async function saveCreative(slug: string, kind: CreativeKind, _: CreativeState, f: FormData): Promise<CreativeState> {
+  const u = await requireRole("student");
+  const w = await getWork(slug);
+  const cast = CHARACTERS[slug];
+  if (!w || !cast || !(kind in KIND)) return { error: "Бұл шығармаға шығармашылық зертхана жоқ." };
+  const text = str(f, "text").slice(0, 6000);
+  const to = kind === "hat" ? cast.find((c) => c.name === str(f, "to"))?.name : undefined;
+  if (kind === "hat" && !to) return { error: "Хат кімге екенін таңда." };
+  if (words(text) < MIN_WORDS) return { error: `Кемінде ${MIN_WORDS} сөз жаз.` };
+  const [cur] = await sql<{ data: { text?: string; to?: string }; result: object; teacher_scores: number[] | null }[]>`
+    select data, result, teacher_scores from lab_works where student_id = ${u.id} and work_id = ${w.id} and kind = ${kind}`;
+  if (cur && cur.data.text === text && cur.data.to === to) return { ok: "Өзгеріс жоқ, жұмыс сақтаулы." };
+  // A changed text needs a new AI comment and a new teacher grade.
+  const prev = await saveLab(u.id, w.id, kind, to ? { text, to } : { text }, {}, true);
+  if (cur?.teacher_scores) await sql`update lab_works set teacher_scores = null where student_id = ${u.id} and work_id = ${w.id} and kind = ${kind}`;
+  if (!prev) await addPoints(u.id, POINTS.creative, `${kind}:${slug}`);
+  revalidatePath("/oqushy", "layout");
+  return { ok: prev ? "✓ Жаңартылды. Мұғалім жаңа нұсқаны көреді." : `✓ Сақталды, мұғалім көреді. +${POINTS.creative} ашылым` };
+}
+
+export async function creativeFeedback(slug: string, kind: CreativeKind): Promise<CreativeState> {
+  const u = await requireRole("student");
+  const w = await getWork(slug);
+  if (!w || !(kind in KIND)) return { error: "Жұмыс табылмады." };
+  const [l] = await sql<{ id: string; data: { text: string; to?: string }; result: { ai?: unknown } }[]>`
+    select id, data, result from lab_works where student_id = ${u.id} and work_id = ${w.id} and kind = ${kind}`;
+  if (!l) return { error: "Алдымен жұмысыңды сақта." };
+  if (l.result.ai) return { ok: "ЖИ пікірі дайын." };
+  const check = checkMessage(l.data.text);
+  if (!check.ok) return { error: check.message };
+  if ((await aiUsedToday(u.id)) >= STUDENT_LIMIT) return { error: `Бүгінгі ${STUDENT_LIMIT} ЖИ сұрағының шегі бітті. Ертең қайта көр, ал мұғалім жұмысыңды бәрібір көреді.` };
+  try {
+    const r = isMock()
+      ? { data: mockCreative(l.data.text), usage: undefined }
+      : await generateJson(CREATIVE_SYSTEM, creativeUser({ task: KIND[kind].task, title: w.title, summary: w.summary, to: l.data.to, criteria: CRITERIA[kind], text: l.data.text }), CreativeSchema);
+    await logAiRequest(u.id, r.usage);
+    await sql`update lab_works set result = result || ${sql.json({ ai: r.data })} where id = ${l.id}`;
+    revalidatePath(`/oqushy/shygarmashylyq/${slug}`);
+    return { ok: "✓ ЖИ пікірі дайын." };
+  } catch (e) {
+    console.error(e);
+    return { error: e instanceof AiError ? e.userMessage : "Қате шықты. Қайта көр." };
+  }
 }

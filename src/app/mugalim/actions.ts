@@ -60,12 +60,12 @@ export async function createLabAssignment(f: FormData) {
   redirect(`/mugalim?c=${classId}&ok=1`);
 }
 
-export async function gradeEgerde(labWorkId: string, classId: string, f: FormData) {
+export async function gradeLabWork(labWorkId: string, classId: string, f: FormData) {
   const u = await requireRole("teacher");
   await ownClass(u.id, classId);
   const scores = [0, 1, 2].map((i) => Math.max(0, Math.min(2, Number(f.get(`k${i}`)) || 0)));
   await sql`update lab_works l set teacher_scores = ${scores}
-    where l.id = ${labWorkId} and l.kind = 'egerde'
+    where l.id = ${labWorkId} and l.kind in ('egerde', 'soni', 'hat')
       and exists (select 1 from class_members m where m.student_id = l.student_id and m.class_id = ${classId})`;
   revalidatePath("/mugalim");
   redirect(`/mugalim?c=${classId}&g=${labWorkId}&graded=1`);

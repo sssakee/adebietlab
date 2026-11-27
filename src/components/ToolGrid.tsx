@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AudioLines, BookA, GitBranch, Hourglass, Image as ImageIcon, MapPinned, MessagesSquare, Repeat, TrendingUp, Waypoints, type LucideIcon } from "lucide-react";
+import { AudioLines, BookA, GitBranch, Hourglass, Image as ImageIcon, MapPinned, MessagesSquare, PenLine, Repeat, TrendingUp, Waypoints, type LucideIcon } from "lucide-react";
 
 type ToolCard = { href: string; title: string; text: string; icon: LucideIcon; color: string };
 
@@ -19,6 +19,7 @@ export const MORE_TOOLS: ToolCard[] = [
 /** Tools where the AI takes part. */
 export const AI_TOOLS: ToolCard[] = [
   { href: "/oqushy/suhbat", title: "Кейіпкермен сұхбат", text: "Абайға не Қозы Көрпешке сұрақ қой: ЖИ кейіпкер рөлінде, шығарма мазмұнына сүйеніп жауап береді.", icon: MessagesSquare, color: "bg-red" },
+  { href: "/oqushy/shygarmashylyq", title: "Шығармашылық зертхана", text: "Шығарманың соңын өзгертіп жаз не кейіпкерге хат жаз. ЖИ пікір береді, бағаны мұғалім қояды.", icon: PenLine, color: "bg-magenta" },
 ];
 
 /** Reference pages: where the authors came from, how literature grew, what old words mean. */

@@ -3,14 +3,14 @@ import { requireRole } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { pickClass } from "@/lib/teacher";
 import type { Character } from "@/lib/queries";
-import { createLabAssignment, gradeEgerde } from "./actions";
+import { createLabAssignment, gradeLabWork } from "./actions";
 import { ClassPicker } from "./ClassPicker";
 import { Submit } from "@/components/Submit";
 import { PageHead } from "@/components/PageHead";
+import { CRITERIA, KIND } from "@/lib/creative";
 
 export const metadata = { title: "Шолу" };
 
-const CRITERIA = ["Болжам кейіпкер мінезіне сай", "Жырдан дәлел келтірілген", "Оқиғаның соңы логикалы"];
 
 export default async function TeacherHome({ searchParams }: PageProps<"/mugalim">) {
   const u = await requireRole("teacher");
@@ -39,7 +39,7 @@ export default async function TeacherHome({ searchParams }: PageProps<"/mugalim"
       (select round(avg((result->>'found')::numeric), 1)::float from lab_works where kind = 'char_map' and student_id in (select * from m)) as map_avg,
       (select max((result->>'total')::int) from lab_works where kind = 'char_map' and student_id in (select * from m)) as map_total,
       (select round(100.0 * avg(((result->>'meter_ok')::boolean and (result->>'rhyme_ok')::boolean)::int))::int from lab_works where kind = 'olen' and student_id in (select * from m)) as olen_ok,
-      (select count(*)::int from lab_works where kind = 'egerde' and shared and teacher_scores is null and student_id in (select * from m)) as pending`,
+      (select count(*)::int from lab_works where kind in ('egerde', 'soni', 'hat') and shared and teacher_scores is null and student_id in (select * from m)) as pending`,
     sql<{ text: string; n: number; tool: string; tone: string }[]>`
     with m as (select student_id from class_members where class_id = ${cls.id})
     (select 'Ұйқасты ' || (data->>'rhyme') || ' деп шатастырады' as text, count(*)::int n, 'Өлең өлшегіш' tool, 'red' tone
@@ -58,11 +58,12 @@ export default async function TeacherHome({ searchParams }: PageProps<"/mugalim"
       where a.class_id = ${cls.id} and t.type <> 'open' and coalesce((s.auto_scores->>t.id::text)::int, 0) < t.points
       group by t.id, t.prompt)
     order by n desc limit 4`,
-    sql<{ id: string; full_name: string; prediction: string; evidence: string; votes: number; teacher_scores: number[] | null }[]>`
-    select l.id, p.full_name, l.data->>'prediction' as prediction, l.data->>'evidence' as evidence, l.teacher_scores,
+    sql<{ id: string; full_name: string; kind: "egerde" | "soni" | "hat"; title: string; prediction: string; evidence: string; to: string | null; votes: number; teacher_scores: number[] | null; ai: { scores: number[]; comment: string } | null }[]>`
+    select l.id, p.full_name, l.kind, w.title, coalesce(l.data->>'prediction', l.data->>'text') as prediction, coalesce(l.data->>'evidence', '') as evidence,
+      l.data->>'to' as to, l.teacher_scores, l.result->'ai' as ai,
       (select count(*)::int from lab_votes v where v.lab_work_id = l.id) as votes
-    from lab_works l join profiles p on p.id = l.student_id join class_members m on m.student_id = l.student_id
-    where m.class_id = ${cls.id} and l.kind = 'egerde' and l.shared
+    from lab_works l join profiles p on p.id = l.student_id join class_members m on m.student_id = l.student_id join works w on w.id = l.work_id
+    where m.class_id = ${cls.id} and l.kind in ('egerde', 'soni', 'hat') and l.shared
     order by (l.teacher_scores is null) desc, l.updated_at desc`,
   ]);
 
@@ -92,7 +93,7 @@ export default async function TeacherHome({ searchParams }: PageProps<"/mugalim"
         <Stat label="Жұмысқа қатысты" value={`${stats.active}`} sub={`/ ${cls.students}`} />
         <Stat label="Кейіпкер картасы, орташа" value={stats.map_avg?.toString().replace(".", ",") ?? "—"} sub={stats.map_total ? `/ ${stats.map_total} байланыс` : ""} />
         <Stat label="Өлең өлшегіш, дұрыс" value={stats.olen_ok === null ? "—" : `${stats.olen_ok}%`} />
-        <Stat label="Бағалауды күтуде" value={`${stats.pending}`} sub="«Егер...»" gold />
+        <Stat label="Бағалауды күтуде" value={`${stats.pending}`} sub="жазба жұмыс" gold />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
@@ -158,31 +159,41 @@ export default async function TeacherHome({ searchParams }: PageProps<"/mugalim"
       </div>
 
       <section className="card" aria-labelledby="eg">
-        <h2 id="eg" className="text-xl font-bold">«Егер...» жұмысын бағалау</h2>
+        <h2 id="eg" className="text-xl font-bold">Жазба жұмыстарды бағалау</h2>
+        <p className="mt-1 text-sm text-muted">«Егер...» болжамы, «Соңын өзгерт» және «Кейіпкерге хат». ЖИ пікірі тек ұсыныс, бағаны сіз қоясыз.</p>
         {g ? (
           <div className="mt-4 grid gap-6 lg:grid-cols-2">
             <div>
-              <p className="text-sm font-bold text-muted">{g.full_name} · сыныптастар қолдауы: {g.votes}</p>
-              <blockquote className="mt-3 rounded-2xl bg-soft p-4 font-bold">«{g.prediction}»</blockquote>
+              <p className="text-sm font-bold text-muted">
+                {g.full_name} · «{g.title}» · {g.kind === "egerde" ? `«Егер...», сыныптастар қолдауы: ${g.votes}` : KIND[g.kind].title}
+                {g.to && ` · кімге: ${g.to}`}
+              </p>
+              <blockquote className={`mt-3 whitespace-pre-line rounded-2xl bg-soft p-4 ${g.kind === "egerde" ? "font-bold" : "max-h-96 overflow-y-auto"}`}>{g.kind === "egerde" ? `«${g.prediction}»` : g.prediction}</blockquote>
               {g.evidence && <p className="mt-3 text-sm text-muted">Дәлел: {g.evidence}</p>}
+              {g.ai && (
+                <div className="mt-3 rounded-2xl bg-violet-faint p-4 text-sm">
+                  <p className="font-bold">ЖИ ұсынысы: <span className="num">{g.ai.scores.join(" · ")}</span></p>
+                  <p className="mt-1 text-muted">{g.ai.comment}</p>
+                </div>
+              )}
               {egerde.length > 1 && (
                 <nav aria-label="Басқа жұмыстар" className="mt-4 flex flex-wrap gap-2">
                   {egerde.map((e) => (
                     <Link key={e.id} href={`/mugalim?c=${cls.id}&g=${e.id}`} aria-current={e.id === g.id ? "true" : undefined} className={`tag px-3 py-2 ${e.id === g.id ? "bg-primary text-on-color" : e.teacher_scores ? "bg-green-soft text-green-ink" : "bg-gold-soft text-ink"}`}>
-                      {e.full_name}{e.teacher_scores ? " ✓" : ""}
+                      {e.full_name}{e.kind !== "egerde" && ` · ${KIND[e.kind].title}`}{e.teacher_scores ? " ✓" : ""}
                     </Link>
                   ))}
                 </nav>
               )}
             </div>
-            <form action={gradeEgerde.bind(null, g.id, cls.id)} className="flex flex-col gap-4" key={g.id}>
-              {CRITERIA.map((c, i) => (
+            <form action={gradeLabWork.bind(null, g.id, cls.id)} className="flex flex-col gap-4" key={g.id}>
+              {CRITERIA[g.kind].map((c, i) => (
                 <fieldset key={c}>
                   <legend className="mb-2 text-sm font-bold">{c}</legend>
                   <div className="flex gap-2">
                     {[0, 1, 2].map((v) => (
                       <label key={v} className="chip w-14 cursor-pointer justify-center px-0">
-                        <input type="radio" name={`k${i}`} value={v} required defaultChecked={g.teacher_scores?.[i] === v} className="sr-only" />
+                        <input type="radio" name={`k${i}`} value={v} required defaultChecked={(g.teacher_scores ?? g.ai?.scores)?.[i] === v} className="sr-only" />
                         {v}
                       </label>
                     ))}
@@ -197,7 +208,7 @@ export default async function TeacherHome({ searchParams }: PageProps<"/mugalim"
             </form>
           </div>
         ) : (
-          <p className="mt-3 text-muted">Әзірге болжам жіберілмеді.</p>
+          <p className="mt-3 text-muted">Әзірге жазба жұмыс жіберілмеді.</p>
         )}
       </section>
     </div>
