@@ -45,7 +45,7 @@ Next.js 16 (App Router), TypeScript (strict), Tailwind CSS 4, PostgreSQL (`postg
 
 | `AI_PROVIDER` | Кілт қайдан алынады | Модель мысалы |
 | --- | --- | --- |
-| `gemini` | [aistudio.google.com](https://aistudio.google.com) → Get API key (тегін тариф) | `gemini-flash-latest` |
+| `gemini` | [aistudio.google.com](https://aistudio.google.com) → Get API key (тегін тариф) | `gemini-flash-lite-latest` (тегін тарифте Flash-тың шегі күніне 20 сұрау ғана) |
 | `groq` | [console.groq.com](https://console.groq.com) → API Keys (тегін тариф) | `openai/gpt-oss-120b` |
 | `openai` | кез келген OpenAI-үйлесімді сервис, `AI_BASE_URL` қажет | — |
 
@@ -88,7 +88,7 @@ npm run dev                          # http://localhost:3000
 2. Supabase → **Connect** → **Transaction pooler** жолын көшіріңіз (порты 6543). `[YOUR-PASSWORD]` орнына жоба ашқанда қойған құпиясөзді жазыңыз.
 3. [aistudio.google.com/apikey](https://aistudio.google.com/apikey) → **Create API key** (тегін Gemini кілті).
 4. [vercel.com/new](https://vercel.com/new) → `adebietlab` репозиторийін Import → **Environment Variables**:
-   `DATABASE_URL` (2-қадам), `AUTH_SECRET` (кез келген 40 таңбалы кездейсоқ мәтін), `AI_PROVIDER=gemini`, `AI_API_KEY` (3-қадам), `AI_MODEL=gemini-flash-latest`. Сосын **Deploy**.
+   `DATABASE_URL` (2-қадам), `AUTH_SECRET` (кез келген 40 таңбалы кездейсоқ мәтін), `AI_PROVIDER=gemini`, `AI_API_KEY` (3-қадам), `AI_MODEL=gemini-flash-lite-latest`. Сосын **Deploy**.
 
 Кілттерді ешқашан кодқа не чатқа жазбаңыз — тек `.env.local` пен Vercel баптауларына. Кілт берілмесе, сайт демо режимде (`AI_MOCK`) жұмыс істейді.
 

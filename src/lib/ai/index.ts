@@ -14,7 +14,7 @@ const BASE_URLS: Record<string, string> = {
 
 // Values pasted into a hosting dashboard often carry a trailing newline or spaces.
 const env = (name: string) => process.env[name]?.trim() || undefined;
-const DEFAULT_MODEL: Record<string, string> = { gemini: "gemini-flash-latest", groq: "llama-3.3-70b-versatile" };
+const DEFAULT_MODEL: Record<string, string> = { gemini: "gemini-flash-lite-latest", groq: "llama-3.3-70b-versatile" };
 
 export const isMock = () => env("AI_MOCK") === "true" || !env("AI_API_KEY");
 
@@ -41,7 +41,7 @@ function config() {
 async function call(body: object) {
   const { baseUrl, model, key, extra } = config();
   let res: Response;
-  // A busy model answers 503 at once; two short retries usually get through.
+  // A busy model answers 503 at once; one short retry usually gets through (each try counts toward the free daily quota).
   for (let attempt = 0; ; attempt++) {
     try {
       res = await fetch(`${baseUrl}/chat/completions`, {
@@ -53,10 +53,15 @@ async function call(body: object) {
     } catch (e) {
       throw new AiError("ЖИ-ге қосылу мүмкін болмады. Интернетті тексеріп, қайта көріңіз.", String(e));
     }
-    if (res.status !== 503 || attempt === 2) break;
+    if (res.status !== 503 || attempt === 1) break;
     await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
   }
-  if (res.status === 429) throw new AiError("ЖИ қазір бос емес (сұрау шегі). Бір минуттан кейін қайта көріңіз.", await res.text());
+  if (res.status === 429) {
+    const text = await res.text();
+    // The free tier also has a per-day cap; "a minute" would be a false promise then.
+    const daily = /per day|PerDay/i.test(text);
+    throw new AiError(daily ? "ЖИ-дің бүгінгі тегін сұрау шегі бітті. Ертең қайта көріңіз немесе мұғалімге хабарлаңыз." : "ЖИ қазір бос емес (сұрау шегі). Бір минуттан кейін қайта көріңіз.", text);
+  }
   if (res.status === 401 || res.status === 403) throw new AiError("ЖИ кілті жарамсыз. Әкімші кілтті тексеруі керек.", `${res.status} ${await res.text()}`);
   if (!res.ok) throw new AiError("ЖИ жауап бермеді. Сәлден кейін қайта көріңіз.", `${res.status} ${await res.text()}`);
   return res;

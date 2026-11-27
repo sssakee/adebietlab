@@ -18,7 +18,8 @@ jobs:
       - run: npm run ai:eval
         env:
           AI_PROVIDER: gemini
-          AI_MODEL: gemini-flash-latest
+          # Flash has only 20 free requests a day and timed out under load; Flash-Lite is faster with its own quota.
+          AI_MODEL: gemini-flash-lite-latest
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
       - name: Нәтижені сақтау
         run: |
