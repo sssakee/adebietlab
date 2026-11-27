@@ -163,6 +163,15 @@ async function main() {
   const md = `# ЖИ тест нәтижелері\n\nПровайдер: **${provider}** · Күні: ${new Date().toISOString().slice(0, 10)}\n\n«Қолмен бағалау» деген жолдарды мұғалім не топ мүшесі оқып, баға қояды.\n\n| № | Функция | Тестілік жағдай | Күтілетін нәтиже | Нақты нәтиже | Баға |\n|---|---|---|---|---|---|\n${rows.join("\n")}\n`;
   writeFileSync(new URL("../docs/ai-eval-results.md", import.meta.url), md);
   console.log("\ndocs/ai-eval-results.md жазылды.");
+  written = true;
 }
 
+// A promise that never settles lets Node exit with code 0; make that a visible failure.
+let written = false;
+process.on("exit", () => {
+  if (!written) {
+    console.error("Тест соңына дейін жетпеді: бір жауап ешқашан аяқталмады.");
+    process.exitCode = 1;
+  }
+});
 main();

@@ -111,31 +111,40 @@ export async function streamChat(system: string, history: Msg[], onDone: (u: Usa
   let buf = "";
   const usage: Usage = { input_tokens: 0, output_tokens: 0 };
   return new ReadableStream({
+    // Keep reading until something is enqueued: a pull that returns empty-handed is never
+    // called again, so a chunk with only a role or usage line used to stall the chat forever.
     async pull(ctrl) {
-      const { done, value } = await reader.read();
-      if (done) {
-        onDone(usage);
-        ctrl.close();
-        return;
-      }
-      buf += dec.decode(value, { stream: true });
-      const lines = buf.split("\n");
-      buf = lines.pop() ?? "";
-      for (const line of lines) {
-        if (!line.startsWith("data:")) continue;
-        const data = line.slice(5).trim();
-        if (data === "[DONE]") continue;
-        try {
-          const j = JSON.parse(data);
-          if (j.usage) {
-            usage.input_tokens = j.usage.prompt_tokens ?? 0;
-            usage.output_tokens = j.usage.completion_tokens ?? 0;
-          }
-          const delta = j.choices?.[0]?.delta?.content;
-          if (delta) ctrl.enqueue(enc.encode(delta));
-        } catch {
-          /* partial or keep-alive line */
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) {
+          onDone(usage);
+          ctrl.close();
+          return;
         }
+        buf += dec.decode(value, { stream: true });
+        const lines = buf.split("\n");
+        buf = lines.pop() ?? "";
+        let sent = false;
+        for (const line of lines) {
+          if (!line.startsWith("data:")) continue;
+          const data = line.slice(5).trim();
+          if (data === "[DONE]") continue;
+          try {
+            const j = JSON.parse(data);
+            if (j.usage) {
+              usage.input_tokens = j.usage.prompt_tokens ?? 0;
+              usage.output_tokens = j.usage.completion_tokens ?? 0;
+            }
+            const delta = j.choices?.[0]?.delta?.content;
+            if (delta) {
+              ctrl.enqueue(enc.encode(delta));
+              sent = true;
+            }
+          } catch {
+            /* partial or keep-alive line */
+          }
+        }
+        if (sent) return;
       }
     },
     cancel() {
