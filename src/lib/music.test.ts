@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BARS, hits } from "./music";
+import { BARS, EIGHTH, hits, stepLength } from "./music";
 
 describe("background tune", () => {
   it("every bar has six eighths and starts on a note", () => {
@@ -10,12 +10,14 @@ describe("background tune", () => {
     }
   });
 
-  it("strums every eighth with a drum on the beats, and the calm section has no drum", () => {
-    const loud = Array.from({ length: 48 }, (_, s) => hits(s));
-    expect(loud.every((h) => h.length > 0)).toBe(true);
-    expect(loud.filter((h) => h.some((x) => x.kind === "drum"))).toHaveLength(16);
-    const calm = Array.from({ length: 48 }, (_, s) => hits(96 + s)).flat();
-    expect(calm.some((x) => x.kind === "drum")).toBe(false);
-    expect(hits(0).every((x) => Number.isFinite(x.f) && x.vol > 0 && x.vol <= 1)).toBe(true);
+  it("each bar starts on the drone, the pass ends with a breath, and phrase ends slow down", () => {
+    const pass = 18 * 6;
+    for (let bar = 0; bar < 18; bar++) expect(hits(bar * 6).length).toBeGreaterThan(0);
+    const rest = Array.from({ length: 12 }, (_, i) => hits(16 * 6 + i)).flat();
+    expect(rest).toHaveLength(2); // the drone alone, once per bar
+    expect(stepLength(3 * 6 + 5)).toBeGreaterThan(EIGHTH);
+    expect(stepLength(0)).toBe(EIGHTH);
+    const all = Array.from({ length: pass }, (_, s) => hits(s)).flat();
+    expect(all.every((h) => Number.isFinite(h.f) && h.vol > 0 && h.vol <= 1)).toBe(true);
   });
 });
