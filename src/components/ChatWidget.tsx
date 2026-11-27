@@ -1,4 +1,5 @@
 "use client";
+import { MicButton } from "./MicButton";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -203,6 +204,7 @@ export function ChatWidget() {
               <Send className="size-5" aria-hidden="true" />
             </button>
           </form>
+          <div className="mt-2"><MicButton target="chat-input" /></div>
           <p className="mt-3 text-xs text-muted">ЖИ қателесуі мүмкін. Маңызды нәрсені мұғаліміңнен тексер.</p>
         </div>
       </section>

@@ -118,15 +118,15 @@ create table submissions (
   unique (assignment_id, student_id)
 );
 
--- Lab tool results. kind: 'olen' | 'char_map' | 'egerde' | 'zheli' (оқиға желісі).
+-- Lab tool results. kind: 'olen' | 'char_map' | 'egerde' | 'zheli' (оқиға желісі) | 'soni' (соңын өзгерту) | 'hat' (кейіпкерге хат).
 create table lab_works (
   id uuid primary key default gen_random_uuid(),
   student_id uuid not null references profiles on delete cascade,
   work_id uuid not null references works,
-  kind text not null check (kind in ('olen', 'char_map', 'egerde', 'zheli')),
+  kind text not null constraint lab_works_kind_check check (kind in ('olen', 'char_map', 'egerde', 'zheli', 'soni', 'hat')),
   data jsonb not null default '{}',
   result jsonb not null default '{}',
-  teacher_scores int[],            -- «Егер...»: 3 criteria × 0–2
+  teacher_scores int[],            -- «Егер...», «соңы», «хат»: 3 criteria × 0–2
   shared boolean not null default false,
   updated_at timestamptz not null default now(),
   unique (student_id, work_id, kind)
@@ -160,6 +160,42 @@ create table login_attempts (
   key text primary key,
   fails int not null default 0,
   reset_at timestamptz not null
+);
+
+-- Points with the time they were earned: the weekly rating sums this week's rows.
+create table points_log (
+  student_id uuid not null references profiles on delete cascade,
+  points int not null,
+  reason text not null default '',
+  at timestamptz not null default now()
+);
+create index points_log_at on points_log (at);
+
+-- Best score per quiz: a work slug, or 'kun:YYYY-MM-DD' for the daily quiz.
+create table quiz_results (
+  student_id uuid not null references profiles on delete cascade,
+  quiz text not null,
+  best int not null default 0,
+  total int not null,
+  updated_at timestamptz not null default now(),
+  primary key (student_id, quiz)
+);
+
+-- The student's own dictionary. source: 'sozdik' (our glossary) or 'ai' (an AI explanation, marked as such).
+create table words (
+  student_id uuid not null references profiles on delete cascade,
+  word text not null,
+  meaning text not null,
+  source text not null default 'sozdik',
+  added_at timestamptz not null default now(),
+  primary key (student_id, word)
+);
+
+-- The latest AI reading plan, kept for a day so a reload does not spend the daily AI quota.
+create table reading_plans (
+  student_id uuid primary key references profiles on delete cascade,
+  plan jsonb not null,
+  created_at timestamptz not null default now()
 );
 
 do $$

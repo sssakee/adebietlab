@@ -8,7 +8,7 @@ const open = () =>
     max_pipeline: 1, // Supavisor before 2.10 never answers queries pipelined on one connection
     query_timeout: 10, // a socket that stops answering fails the page instead of hanging it
     idle_timeout: 20,
-    connection: { search_path: "app" },
+    connection: { search_path: "app", TimeZone: "Asia/Almaty" },
     transform: { undefined: null },
   });
 

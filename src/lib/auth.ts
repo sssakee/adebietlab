@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { sql } from "./db";
+import { ensureFeatures } from "./migrate";
 
 const COOKIE = "al_session";
 
@@ -59,6 +60,7 @@ export const getUser = cache(async (): Promise<User | null> => {
   }
   if (!mac || mac.length !== expected.length || !timingSafeEqual(Buffer.from(mac), Buffer.from(expected))) return null;
   if (!/^[0-9a-f-]{36}$/.test(id)) return null;
+  await ensureFeatures();
   const [u] = await sql<User[]>`
     select p.id, p.role, p.full_name, p.points, c.id as class_id, c.name as class_name, c.grade
     from profiles p

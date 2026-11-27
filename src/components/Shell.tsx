@@ -73,7 +73,7 @@ export function Shell({
       {floating}
       <Tour storageKey={tour.key} steps={tour.steps} />
       <nav aria-label="Негізгі мәзір" className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden">
-        <div className="mx-auto grid max-w-lg grid-cols-5">
+        <div className={`mx-auto grid max-w-lg ${nav.length > 5 ? "grid-cols-6" : "grid-cols-5"}`}>
           {nav.map((n) => (
             <NavLink key={n.href} href={n.href} exact={n.exact} tab>
               <span className="bounce grid h-8 w-14 place-items-center rounded-full transition-colors group-aria-[current=page]:bg-accent-soft [&>svg]:size-6" aria-hidden="true">

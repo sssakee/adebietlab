@@ -29,7 +29,7 @@ export async function checkOlen(slug: string, meter: string, rhyme: string): Pro
   const result = { meter_ok: meter === w.lab.poem.meter, rhyme_ok: rhyme === w.lab.poem.rhyme };
   const prev = await saveLab(u.id, w.id, "olen", { meter, rhyme }, result);
   // Points once: the first time both answers are right.
-  if (result.meter_ok && result.rhyme_ok && !(prev?.meter_ok && prev?.rhyme_ok)) await addPoints(u.id, POINTS.olen);
+  if (result.meter_ok && result.rhyme_ok && !(prev?.meter_ok && prev?.rhyme_ok)) await addPoints(u.id, POINTS.olen, `olen:${slug}`);
   revalidatePath("/oqushy");
   return result;
 }
@@ -47,8 +47,8 @@ async function saveMap(studentId: string, slug: string, edges: Edge[]) {
   const result = { found: cmp.found, total: cmp.total, missing: cmp.missing.map((e) => [e.from, e.to].sort().join("|")) };
   const prev = await saveLab(studentId, w.id, "char_map", { edges }, result);
   const gained = cmp.found - Number(prev?.found ?? 0);
-  if (gained > 0) await addPoints(studentId, gained * 2);
-  if (cmp.found === cmp.total && Number(prev?.found ?? 0) < cmp.total) await addPoints(studentId, POINTS.charMap);
+  if (gained > 0) await addPoints(studentId, gained * 2, `char_map:${slug}`);
+  if (cmp.found === cmp.total && Number(prev?.found ?? 0) < cmp.total) await addPoints(studentId, POINTS.charMap, `char_map:${slug}`);
   revalidatePath(`/oqushy/zertkhana/karta/${slug}`);
 }
 
@@ -81,7 +81,7 @@ export async function saveEgerde(slug: string, f: FormData) {
   if (prediction.length < 10) redirect(`/oqushy/zertkhana/karta/${slug}?eg=short#egerde`);
   const checklist = w.lab.egerde.checklist.map((_, i) => f.get(`c${i}`) === "on");
   const prev = await saveLab(u.id, w.id, "egerde", { prediction, evidence, checklist }, {}, true);
-  if (!prev) await addPoints(u.id, POINTS.egerde);
+  if (!prev) await addPoints(u.id, POINTS.egerde, `egerde:${slug}`);
   revalidatePath(`/oqushy/zertkhana/karta/${slug}`);
   redirect(`/oqushy/zertkhana/karta/${slug}?eg=ok#egerde`);
 }
@@ -134,7 +134,7 @@ export async function submitAssignment(assignmentId: string, f: FormData) {
   await sql`insert into submissions (assignment_id, student_id, answers, auto_scores, status, used_ai_hint)
     values (${a.id}, ${u.id}, ${sql.json(answers as never)}, ${sql.json(auto)}, ${hasOpen ? "submitted" : "graded"}, ${!!hint})
     on conflict do nothing`;
-  await addPoints(u.id, POINTS.assignment);
+  await addPoints(u.id, POINTS.assignment, "assignment");
   revalidatePath("/oqushy", "layout");
   redirect(`/oqushy/tapsyrmalar/${assignmentId}`);
 }
@@ -152,7 +152,7 @@ export async function checkZheli(slug: string, order: string[], elements: Record
   const result = compareTimeline(ref, order, cleanEls);
   const prev = await saveLab(u.id, w.id, "zheli", { order, elements: cleanEls }, result);
   const perfect = (r: { orderOk?: unknown; elementsOk?: unknown; total?: unknown } | null) => !!r && r.orderOk === r.total && r.elementsOk === r.total;
-  if (perfect(result) && !perfect(prev)) await addPoints(u.id, POINTS.zheli);
+  if (perfect(result) && !perfect(prev)) await addPoints(u.id, POINTS.zheli, `zheli:${slug}`);
   revalidatePath("/oqushy");
   return result;
 }

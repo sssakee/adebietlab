@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { sql } from "./db";
 import type { Edge, TimelineEvent } from "./grading";
+import type { QuizWork } from "./quiz";
 
 export type Character = { id: string; name: string; note: string; kind: "main" | "secondary" | "antagonist"; x: number; y: number };
 export type WorkLab = {
@@ -107,19 +108,30 @@ export const discoveries = cache(async (studentId: string) => {
   });
 });
 
-/** Days in a row (ending today or yesterday) with any lab work or submission. Dates come from the DB clock. */
-export const streak = cache(async (studentId: string) => {
+// Everything a student did, by day: lab work, submissions, quizzes, saved words and points earned.
+const activity = (studentId: string) => sql`
+  select updated_at::date d from lab_works where student_id = ${studentId}
+  union select submitted_at::date from submissions where student_id = ${studentId}
+  union select updated_at::date from quiz_results where student_id = ${studentId}
+  union select added_at::date from words where student_id = ${studentId}
+  union select at::date from points_log where student_id = ${studentId}`;
+
+/** The last 60 active days (newest first) and today, both from the DB clock (Almaty time). */
+export const activeDays = cache(async (studentId: string) => {
   const rows = await sql<{ d: string; today: string }[]>`
-    select distinct d::text, current_date::text as today from (
-      select updated_at::date d from lab_works where student_id = ${studentId}
-      union select submitted_at::date from submissions where student_id = ${studentId}
-    ) x order by d desc limit 60`;
-  if (!rows.length) return 0;
-  const days = new Set(rows.map((r) => r.d));
-  const back = (n: number) => new Date(Date.parse(rows[0].today) - n * 864e5).toISOString().slice(0, 10);
-  const start = days.has(back(0)) ? 0 : 1;
+    select distinct d::text, current_date::text as today from (${activity(studentId)}) x order by d desc limit 60`;
+  const [{ today }] = rows.length ? rows : await sql<{ today: string }[]>`select current_date::text as today`;
+  return { days: new Set(rows.map((r) => r.d)), today };
+});
+
+export const dayBefore = (day: string, n: number) => new Date(Date.parse(day) - n * 864e5).toISOString().slice(0, 10);
+
+/** Days in a row ending today, or yesterday when today has nothing yet. */
+export const streak = cache(async (studentId: string) => {
+  const { days, today } = await activeDays(studentId);
+  const start = days.has(today) ? 0 : 1;
   let n = 0;
-  while (days.has(back(start + n))) n++;
+  while (days.has(dayBefore(today, start + n))) n++;
   return n;
 });
 
@@ -128,13 +140,17 @@ export const DAILY_GOAL = 3;
 export const todayCount = cache(async (studentId: string) => {
   const [r] = await sql<{ n: number }[]>`
     select ((select count(*) from lab_works where student_id = ${studentId} and updated_at::date = current_date)
-          + (select count(*) from submissions where student_id = ${studentId} and submitted_at::date = current_date))::int as n`;
+          + (select count(*) from submissions where student_id = ${studentId} and submitted_at::date = current_date)
+          + (select count(*) from quiz_results where student_id = ${studentId} and updated_at::date = current_date)
+          + (select count(*) from words where student_id = ${studentId} and added_at::date = current_date))::int as n`;
   return r.n;
 });
 
-/** Adds points once per (student, activity key). Activity keys live in lab_works/submissions themselves. */
-export async function addPoints(studentId: string, points: number) {
+/** Adds points; the log keeps when they were earned, for the weekly rating. Callers make sure an activity pays once. */
+export async function addPoints(studentId: string, points: number, reason: string) {
+  if (points <= 0) return;
   await sql`update profiles set points = points + ${points} where id = ${studentId}`;
+  await sql`insert into points_log (student_id, points, reason) values (${studentId}, ${points}, ${reason})`;
 }
 
 export const STATUS = {
@@ -142,3 +158,25 @@ export const STATUS = {
   submitted: { label: "Тапсырылды", cls: "bg-[#e4efff] text-primary" },
   graded: { label: "Бағаланды", cls: "bg-green-soft text-green-ink" },
 } as const;
+
+/** Everything the quick quiz needs about the library. */
+export const quizWorks = cache(() => sql<QuizWork[]>`select slug, title, author, author_years, genre, grades, lab from works order by slug`);
+
+/** Today on the DB clock (Almaty time), as YYYY-MM-DD. */
+export const today = cache(async () => (await sql<{ d: string }[]>`select current_date::text as d`)[0].d);
+
+export type RatingRow = { id: string; full_name: string; pts: number; place: number };
+
+/** This week's points (from Monday) of everyone in the class; equal points share a place. */
+export const weeklyRating = cache(async (classId: string | null) => {
+  if (!classId) return [];
+  const rows = await sql<Omit<RatingRow, "place">[]>`
+    select p.id, p.full_name, coalesce(sum(l.points), 0)::int as pts
+    from class_members m join profiles p on p.id = m.student_id
+    left join points_log l on l.student_id = p.id and l.at >= date_trunc('week', now())
+    where m.class_id = ${classId}
+    group by p.id, p.full_name
+    order by pts desc, p.full_name`;
+  let place = 0;
+  return rows.map((r, i): RatingRow => ({ ...r, place: i > 0 && rows[i - 1].pts === r.pts ? place : (place = i + 1) }));
+});

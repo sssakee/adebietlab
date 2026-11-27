@@ -1,4 +1,5 @@
 import type { Task } from "@/lib/ai/schemas";
+import { MicButton } from "./MicButton";
 import { TASK_TYPE_LABEL } from "@/lib/ai/schemas";
 
 export type DbTask = Task & { id: string };
@@ -89,7 +90,10 @@ export function TaskFields({ t, n }: { t: DbTask; n: number }) {
       {t.type === "fill_blank" ? (
         <input id={key} name={key} required className="field" autoComplete="off" />
       ) : (
-        <textarea id={key} name={key} required rows={5} maxLength={4000} className="field" />
+        <>
+          <textarea id={key} name={key} required rows={5} maxLength={4000} className="field" />
+          <div className="mt-2"><MicButton target={key} /></div>
+        </>
       )}
     </fieldset>
   );

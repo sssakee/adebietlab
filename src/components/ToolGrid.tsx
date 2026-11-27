@@ -1,17 +1,25 @@
 import Link from "next/link";
-import { AudioLines, GitBranch, TrendingUp, Waypoints } from "lucide-react";
+import { AudioLines, GitBranch, Image as ImageIcon, Repeat, TrendingUp, Waypoints, type LucideIcon } from "lucide-react";
 
-const TOOLS = [
+type ToolCard = { href: string; title: string; text: string; icon: LucideIcon; color: string };
+
+const TOOLS: ToolCard[] = [
   { href: "/oqushy/zertkhana/olen/abai-qys", title: "Өлең өлшегіш", text: "Буын санын, ұйқас түрін, өлең өлшемін көрнекі түрде анықта.", icon: AudioLines, color: "bg-primary" },
   { href: "/oqushy/zertkhana/karta/kozy-korpesh", title: "Кейіпкер картасы", text: "Кейіпкерлерді байланыстырып, қатынасын мәтінмен дәлелде.", icon: Waypoints, color: "bg-violet" },
   { href: "/oqushy/zertkhana/karta/kozy-korpesh#egerde", title: "«Егер...» тәжірибесі", text: "Кейіпкер басқа шешім қабылдаса ше? Болжам жаса, дәлелде.", icon: GitBranch, color: "bg-red" },
   { href: "/oqushy/zertkhana/zheli/kozy-korpesh", title: "Оқиға желісі", text: "Оқиғаларды ретке қойып, сюжет элементтеріне орналастыр.", icon: TrendingUp, color: "bg-green-ink" },
 ];
 
-export function ToolGrid() {
+/** Tools for remembering and sharing, beyond the analysis tools above. */
+export const MORE_TOOLS: ToolCard[] = [
+  { href: "/oqushy/zhattau", title: "Жаттау режимі", text: "Өлең сөздері деңгей сайын жасырылады, сен жадыңнан жазасың.", icon: Repeat, color: "bg-magenta" },
+  { href: "/oqushy/kartochka", title: "Цитата карточкасы", text: "Ұнаған жолды әдемі суретке айналдырып, бөліс.", icon: ImageIcon, color: "bg-navy" },
+];
+
+export function ToolGrid({ tools = TOOLS }: { tools?: ToolCard[] }) {
   return (
     <div className="rise grid gap-4 md:grid-cols-2">
-      {TOOLS.map((t) => {
+      {tools.map((t) => {
         const body = (
           <>
             <span className={`grid size-14 shrink-0 place-items-center tile rounded-2xl text-on-color ${t.color}`} aria-hidden="true">

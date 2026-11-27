@@ -1,7 +1,7 @@
 import { requireRole } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import type { WorkLab } from "@/lib/queries";
-import { ToolGrid } from "@/components/ToolGrid";
+import { MORE_TOOLS, ToolGrid } from "@/components/ToolGrid";
 import { ToolLinks, type Tool } from "@/components/ToolLinks";
 import { PageHead } from "@/components/PageHead";
 import { QUOTES } from "@/lib/quotes";
@@ -16,8 +16,12 @@ export default async function Lab() {
     select slug, title, author, lab from works where lab <> '{}' order by title`;
   return (
     <div className="flex flex-col gap-6">
-      <PageHead title="Зертхана құралдары" sub="Барлық құрал ЖИ-сіз, ережемен жұмыс істейді." quote={QUOTES.olen} />
+      <PageHead title="Зертхана құралдары" sub="Талдау, жаттау және бөлісу құралдары. Бәрі ЖИ-сіз, ережемен жұмыс істейді." quote={QUOTES.olen} />
       <ToolGrid />
+      <section aria-labelledby="more">
+        <h2 id="more" className="mb-4 text-2xl font-bold">Жаттау және бөлісу</h2>
+        <ToolGrid tools={MORE_TOOLS} />
+      </section>
       <section aria-labelledby="by-work">
         <h2 id="by-work" className="mb-4 text-2xl font-bold">Шығарма бойынша</h2>
         <ul className="grid gap-4 lg:grid-cols-2">

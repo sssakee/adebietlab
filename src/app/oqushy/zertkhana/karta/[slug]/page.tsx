@@ -8,6 +8,7 @@ import { addEdge, removeEdge, saveEgerde, toggleVote } from "@/app/oqushy/action
 import { LabHeader } from "../../LabHeader";
 import { Sfx } from "@/components/Sfx";
 import { Submit } from "@/components/Submit";
+import { MicButton } from "@/components/MicButton";
 
 export const metadata = { title: "Кейіпкер картасы" };
 
@@ -179,6 +180,7 @@ export default async function KartaPage({ params, searchParams }: PageProps<"/oq
                 <div>
                   <label htmlFor="prediction" className="label">Менің болжамым</label>
                   <textarea id="prediction" name="prediction" required minLength={10} rows={5} defaultValue={egerde?.data.prediction} className="field" placeholder="Мен ойлаймын, егер…" />
+                  <div className="mt-2"><MicButton target="prediction" /></div>
                 </div>
                 <div>
                   <label htmlFor="ev" className="label">Жырдан дәлел (жол не эпизод)</label>
