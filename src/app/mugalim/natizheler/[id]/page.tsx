@@ -28,7 +28,7 @@ export default async function Grade({ params, searchParams }: PageProps<"/mugali
   return (
     <div className="flex flex-col gap-6">
       <header className="card flex items-center gap-4 py-4">
-        <Link href={`/mugalim/natizheler?c=${s.class_id}&a=${s.assignment_id}`} className="grid size-12 place-items-center rounded-2xl bg-soft" aria-label="Нәтижелерге қайту">
+        <Link href={`/mugalim/natizheler?c=${s.class_id}&a=${s.assignment_id}`} transitionTypes={["nav-back"]} className="grid size-12 place-items-center rounded-2xl bg-soft transition-colors hover:bg-accent-soft" aria-label="Нәтижелерге қайту">
           <ArrowLeft className="size-5" aria-hidden="true" />
         </Link>
         <div>

@@ -14,7 +14,7 @@ export function ToolGrid() {
       {TOOLS.map((t) => {
         const body = (
           <>
-            <span className={`grid size-14 shrink-0 place-items-center rounded-2xl text-on-color ${t.color}`} aria-hidden="true">
+            <span className={`grid size-14 shrink-0 place-items-center tile rounded-2xl text-on-color ${t.color}`} aria-hidden="true">
               <t.icon className="size-7" />
             </span>
             <span>
@@ -24,7 +24,7 @@ export function ToolGrid() {
           </>
         );
         return t.href ? (
-          <Link key={t.title} href={t.href} className="card flex gap-4 p-5 transition-transform hover:-translate-y-0.5">
+          <Link key={t.title} href={t.href} transitionTypes={["nav-forward"]} className="card flex gap-4 p-5">
             {body}
           </Link>
         ) : (

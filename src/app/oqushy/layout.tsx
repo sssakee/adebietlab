@@ -24,7 +24,7 @@ export default async function StudentLayout({ children }: LayoutProps<"/oqushy">
         {open.title}{open.kind === "lab" && `: ${open.lab_tools.length} зертхана құралы`}.
         {open.due_at && ` Мерзімі — ${open.due_at}.`}
       </p>
-      <Link href={`/oqushy/tapsyrmalar/${open.id}`} className="btn-primary mt-3 w-full whitespace-nowrap px-3">
+      <Link href={`/oqushy/tapsyrmalar/${open.id}`} transitionTypes={["nav-forward"]} className="btn-primary mt-3 w-full whitespace-nowrap px-3">
         Тапсырманы ашу
       </Link>
     </div>

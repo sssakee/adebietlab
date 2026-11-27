@@ -1,3 +1,4 @@
+import { SplitText } from "@/components/SplitText";
 import { Award, Flame, Star } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { sql } from "@/lib/db";
@@ -25,10 +26,12 @@ export default async function Achievements() {
   ];
   return (
     <div className="flex flex-col gap-6">
-      <section className="relative overflow-hidden rounded-[32px] bg-navy p-8 text-white">
+      <section className="relative overflow-hidden rounded-[32px] hero-bg p-8 text-white">
         <Mascot size={130} className="float absolute bottom-0 right-6 hidden sm:block" />
-        <p className="text-sm font-bold text-white/80">{u.class_name}</p>
-        <h1 className="mt-1 text-4xl font-bold">{u.full_name}</h1>
+        <p className="text-sm font-bold text-white/90">{u.class_name}</p>
+        <h1 className="mt-1 text-4xl font-bold">
+          <SplitText text={u.full_name} />
+        </h1>
         <p className="mt-2 text-xl font-bold text-gold">{lvl.name} зерттеуші</p>
         <div className="mt-5 flex flex-wrap gap-3">
           <span className="flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 font-bold"><Star className="size-5 fill-gold text-gold" aria-hidden="true" /> <span className="num">{u.points}</span> ашылым</span>

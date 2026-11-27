@@ -18,7 +18,7 @@ export default async function MyTasks() {
         <ul className="flex flex-col gap-4">
           {list.map((a) => (
             <li key={a.id}>
-              <Link href={`/oqushy/tapsyrmalar/${a.id}`} className="card flex flex-wrap items-center gap-4 p-5 hover:-translate-y-0.5 transition-transform">
+              <Link href={`/oqushy/tapsyrmalar/${a.id}`} transitionTypes={["nav-forward"]} className="card flex flex-wrap items-center gap-4 p-5">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-bold text-muted">
                     {a.kind === "lab" ? a.lab_tools.map((t) => TOOL_LABEL[t]).join(" · ") : "Тапсырмалар жинағы"} · {AI_MODE_LABEL[a.ai_mode]}

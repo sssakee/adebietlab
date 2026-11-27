@@ -103,7 +103,7 @@ async function TaskTable({ a, classId }: { a: { id: string; set_id: string }; cl
                   <td className="num text-right font-bold">{sum === null ? "—" : `${sum} / ${max}`}</td>
                   <td className="text-right">
                     {r.sub_id && (
-                      <Link href={`/mugalim/natizheler/${r.sub_id}`} className={`tag px-3 py-2 ${r.status === "graded" ? "bg-soft text-ink" : "bg-gold-soft text-ink"}`}>
+                      <Link href={`/mugalim/natizheler/${r.sub_id}`} transitionTypes={["nav-forward"]} className={`tag px-3 py-2 ${r.status === "graded" ? "bg-soft text-ink" : "bg-gold-soft text-ink"}`}>
                         {r.status === "graded" ? "Қарау" : "Бағалау"}
                       </Link>
                     )}

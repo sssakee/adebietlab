@@ -43,13 +43,16 @@ export default async function StudentHome() {
           </span>
         </div>
 
-        <section className="relative min-h-80 overflow-hidden rounded-[32px] bg-navy px-6 pb-14 pt-8 text-white sm:px-11 sm:pt-10" aria-labelledby="hello">
+        <section className="relative min-h-80 overflow-hidden rounded-[32px] hero-bg px-6 pb-14 pt-8 text-white sm:px-11 sm:pt-10" aria-labelledby="hello">
           <div className="absolute -bottom-24 right-[-10%] h-56 w-[70%] rounded-[50%] bg-navy-deep" aria-hidden="true" />
-          <div className="absolute right-[34%] top-14 hidden size-20 rounded-full bg-[#e9c75a] sm:block" aria-hidden="true" />
+          <div className="absolute right-[34%] top-14 hidden size-20 rounded-full bg-gold shadow-[0_0_40px_8px_rgb(255_184_0/0.45)] sm:block" aria-hidden="true" />
           <div className="relative z-10 max-w-md">
             <span className="tag bg-white/15 text-white">{u.grade ? `${u.grade}-сынып · ` : ""}Әдебиет</span>
             <h1 id="hello" className="mt-4 text-4xl font-bold sm:text-5xl">
-              Сәлем, <span className="text-gold">{u.full_name}!</span>
+              <span className="word">Сәлем,</span>{" "}
+              <span className="word text-gold" style={{ "--i": 1 } as React.CSSProperties}>
+                {u.full_name}!
+              </span>
             </h1>
             <p className="mt-4 text-lg font-medium text-white/90">Өлеңнің буынын санап, кейіпкерлердің байланысын тауып, жырдың оқиға желісін ретке қой.</p>
             <Link href="/oqushy/zertkhana" className="btn-gold mt-7 h-14 px-8 text-lg">

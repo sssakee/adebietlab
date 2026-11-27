@@ -6,8 +6,10 @@ import { Mascot } from "@/components/Mascot";
 import { Ornament } from "@/components/Ornament";
 import { StudentForm, TeacherForm } from "./Forms";
 import { Quote } from "@/components/Quote";
+import { LiquidMask } from "@/components/LiquidMask";
+import { SplitText } from "@/components/SplitText";
 import Link from "next/link";
-import { AudioLines, MessageCircleQuestion, Waypoints, Wand2 } from "lucide-react";
+import { ArrowRight, AudioLines, MessageCircleQuestion, Waypoints, Wand2 } from "lucide-react";
 
 export const metadata: Metadata = { title: "Кіру", alternates: { canonical: "/kiru" } };
 
@@ -17,15 +19,32 @@ export default async function LoginPage() {
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6 p-4 sm:p-8">
       <Logo />
-      <section className="relative overflow-hidden rounded-[32px] bg-navy px-6 pb-12 pt-8 text-white sm:px-10">
+      <section className="relative overflow-hidden rounded-[32px] hero-bg px-6 pb-14 pt-9 sm:px-10 sm:pb-20 sm:pt-14">
+        <LiquidMask />
         <div className="relative z-10 max-w-xl">
           <h1 className="text-3xl font-bold leading-tight sm:text-5xl">
-            Шығарманы оқып қана қоймай, <span className="text-gold">зерттейтін</span> орын
+            <SplitText text="Шығарманы оқып қана қоймай," /> <span className="sr-only">зерттейтін</span>
+            <span className="swap text-gold" aria-hidden="true">
+              {VERBS.map((v, i) => (
+                <span key={v} style={{ "--i": i } as React.CSSProperties}>
+                  {v}
+                </span>
+              ))}
+            </span>{" "}
+            <span className="word" style={{ "--i": 5 } as React.CSSProperties}>
+              орын
+            </span>
           </h1>
-          <p className="mt-4 text-lg text-white/85">5–11 сынып оқушылары мен қазақ әдебиеті мұғалімдеріне арналған зертхана.</p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <a href="#st" className="btn-gold">Оқушы ретінде кіру</a>
-            <a href="#tc" className="btn border-2 border-white/40 text-white hover:bg-white/10">Мұғалім ретінде кіру</a>
+          <p className="word mt-4 text-lg text-white/90" style={{ "--i": 7 } as React.CSSProperties}>
+            5–11 сынып оқушылары мен қазақ әдебиеті мұғалімдеріне арналған зертхана.
+          </p>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <a href="#st" className="btn-gold h-13 px-7">
+              Оқушы ретінде кіру <ArrowRight className="size-5" aria-hidden="true" />
+            </a>
+            <a href="#tc" className="btn h-13 border-2 border-white/50 bg-white/10 px-7 text-white backdrop-blur-sm hover:border-white hover:bg-white/20">
+              Мұғалім ретінде кіру
+            </a>
           </div>
         </div>
         <Mascot size={170} priority className="float absolute -bottom-2 right-4 hidden sm:block" />
@@ -47,10 +66,12 @@ export default async function LoginPage() {
       <section aria-labelledby="what" className="flex flex-col gap-4">
         <h2 id="what" className="text-2xl font-bold">Мұнда не істей аласыз</h2>
         <ul className="rise grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {FEATURES.map(({ icon: Icon, title, text, who }) => (
+          {FEATURES.map(({ icon: Icon, title, text, who, color }) => (
             <li key={title} className="card flex flex-col gap-3 p-5">
               <span className="flex items-center justify-between">
-                <Icon className="size-7 text-primary" aria-hidden="true" />
+                <span className={`tile grid size-12 place-items-center rounded-2xl text-on-color ${color}`} aria-hidden="true">
+                  <Icon className="size-6" />
+                </span>
                 <span className="tag bg-soft text-muted">{who}</span>
               </span>
               <h3 className="text-lg font-bold">{title}</h3>
@@ -65,7 +86,7 @@ export default async function LoginPage() {
         <ol className="mt-4 grid gap-4 md:grid-cols-3">
           {STEPS.map((t, i) => (
             <li key={t} className="flex gap-3">
-              <span className="num grid size-9 shrink-0 place-items-center rounded-full bg-accent-soft font-bold text-primary-dark">{i + 1}</span>
+              <span className="num grid size-9 shrink-0 place-items-center rounded-full bg-linear-135 from-primary to-violet font-bold text-on-color shadow-[0_8px_16px_-8px_var(--color-primary)]">{i + 1}</span>
               <span className="pt-1.5">{t}</span>
             </li>
           ))}
@@ -85,11 +106,14 @@ export default async function LoginPage() {
 }
 
 const FEATURES = [
-  { icon: AudioLines, who: "Оқушы", title: "Өлең өлшегіш", text: "Буын санын, ұйқас түрін және өлең өлшемін өзің анықтап, бірден тексересің." },
-  { icon: Waypoints, who: "Оқушы", title: "Кейіпкер картасы", text: "Кейіпкерлерді байланыстырып, әр байланысты мәтіннен дәлелдейсің." },
-  { icon: MessageCircleQuestion, who: "Оқушы", title: "Қырантай көмекшісі", text: "Сұрақ қоясың, ол дайын жауап емес, ойлануға бағыт береді." },
-  { icon: Wand2, who: "Мұғалім", title: "Тапсырма жасау", text: "Өз материалыңыздан ЖИ тапсырма құрастырады, сіз тексеріп бекітесіз." },
+  { icon: AudioLines, color: "bg-primary", who: "Оқушы", title: "Өлең өлшегіш", text: "Буын санын, ұйқас түрін және өлең өлшемін өзің анықтап, бірден тексересің." },
+  { icon: Waypoints, color: "bg-violet", who: "Оқушы", title: "Кейіпкер картасы", text: "Кейіпкерлерді байланыстырып, әр байланысты мәтіннен дәлелдейсің." },
+  { icon: MessageCircleQuestion, color: "bg-magenta", who: "Оқушы", title: "Қырантай көмекшісі", text: "Сұрақ қоясың, ол дайын жауап емес, ойлануға бағыт береді." },
+  { icon: Wand2, color: "bg-green-ink", who: "Мұғалім", title: "Тапсырма жасау", text: "Өз материалыңыздан ЖИ тапсырма құрастырады, сіз тексеріп бекітесіз." },
 ];
+
+// The hero verb cycles through what a student does here; screen readers get the first one.
+const VERBS = ["зерттейтін", "талдайтын", "өлшейтін", "дәлелдейтін"];
 
 const STEPS = [
   "Мұғалім тіркеліп, сынып ашады. Жүйе 6 таңбалы код береді.",
