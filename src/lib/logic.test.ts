@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { toCsv } from "./csv";
 import { countSyllables, rhymeScheme, syllabify, syllabifyLine } from "./poem";
-import { compareMap, compareTimeline, levelFor, scoreTask } from "./grading";
+import { answerText, compareMap, compareTimeline, levelFor, scoreTask } from "./grading";
 import { checkMessage } from "./safety";
 import { GenerationSchema, TaskSchema } from "./ai/schemas";
 import { mockFeedback, mockGenerate } from "./ai/mock";
@@ -141,5 +141,16 @@ describe("CSV экспорт", () => {
     expect(out).toContain("Аты;Балл");
     expect(out).toContain("'=HYPERLINK(1);5");
     expect(out).toContain('"«Қыс»; ""тест""";');
+  });
+});
+
+describe("Дұрыс жауапты сөзбен көрсету", () => {
+  const options = ["а", "ә", "б"];
+  it("JSON емес, нұсқа мәтінін береді", () => {
+    expect(answerText({ type: "single_choice", options, answer_key: 1 })).toBe("ә");
+    expect(answerText({ type: "ordering", options, answer_key: [2, 0, 1] })).toBe("б → а → ә");
+    expect(answerText({ type: "fill_blank", options: [], answer_key: ["сақалды"] })).toBe("сақалды");
+    expect(answerText({ type: "matching", options: [], answer_key: { Абай: "Қыс" } })).toBe("Абай — Қыс");
+    expect(answerText({ type: "open", options: [], answer_key: null })).not.toContain("null");
   });
 });

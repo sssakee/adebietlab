@@ -1,0 +1,25 @@
+{
+  "name": "adebietlab-video",
+  "private": true,
+  "scripts": {
+    "record": "node record.mjs",
+    "music": "tsx scripts/music.ts",
+    "plan": "tsx scripts/plan-report.ts",
+    "stills": "node scripts/stills.mjs",
+    "studio": "remotion studio",
+    "render": "tsx scripts/sfx.ts && tsx scripts/music.ts && remotion render Promo out/adebietlab.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.547",
+    "@remotion/transitions": "^4.0.547",
+    "lucide-react": "^1.82.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "remotion": "4.0.547"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "tsx": "^4",
+    "typescript": "^5"
+  }
+}
