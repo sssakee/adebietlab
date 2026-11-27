@@ -1,460 +1,617 @@
-import { AbsoluteFill, Audio, interpolate, Sequence, staticFile, useCurrentFrame, Img, Easing } from "remotion";
-import { TransitionSeries, linearTiming, type TransitionPresentation } from "@remotion/transitions";
-import { fade } from "@remotion/transitions/fade";
-import { slide } from "@remotion/transitions/slide";
-import { wipe } from "@remotion/transitions/wipe";
-import { FlaskConical, ShieldCheck, UserCheck, BookOpenCheck, Sparkles, Monitor, Smartphone, Moon, Download } from "lucide-react";
+import { AbsoluteFill, Audio, Easing, Freeze, Img, interpolate, OffthreadVideo, Sequence, spring, staticFile, useCurrentFrame } from "remotion";
+import { TransitionSeries, linearTiming, type TransitionPresentation, type TransitionPresentationComponentProps } from "@remotion/transitions";
+import { BookOpen, BookOpenCheck, ChartColumn, Download, FlaskConical, Globe, House, KeyRound, Map as MapIcon, MessageCircle, Monitor, Moon, PenLine, ShieldCheck, Smartphone, Sparkles, Star, Trophy, UserCheck, WandSparkles, AudioLines } from "lucide-react";
 import type { ReactNode } from "react";
-import voJson from "./vo.json";
-import boxJson from "./boxes.json";
-import { Burst, C, Chip, Count, Cursor, ease, FONT, FULL, HeroBg, SHOT_W, Mascot, Ornament, PageBg, Phone, PopOut, ShotView, useFonts, useIn, viewOf, mixView, Window, Words, type Box, type View } from "./ui";
+import { C, FONT, Mascot, Ornament, useFonts } from "./ui";
+import { CLIPS, FPS, frameAt, LEAD, LENGTHS, SCENES, STARTS, T, TOTAL, VO, type Box, type Scene } from "./timeline";
 
-const FPS = 30;
-const T = 16; // transition overlap
-const LEAD = 10; // the voice starts this many frames into a scene (after the transition)
-const TAIL = 10; // breath after the last word
+const W = 1920, H = 1080;
+const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
+const ease = (f: number, a: number, b: number, from = 0, to = 1, e = Easing.bezier(0.45, 0, 0.2, 1)) => interpolate(f, [a, b], [from, to], { ...clamp, easing: e });
+const pop = (f: number, at: number, len = 14, k = 1.7) => interpolate(f, [at, at + len], [0, 1], { ...clamp, easing: Easing.out(Easing.back(k)) });
+const NAVY = "#071a4a";
 
-type Vo = { dur: number; beats: number[]; say: string[] };
-const VO = voJson as Record<string, Vo>;
-const BOXES = boxJson as Record<string, Record<string, Box>>;
+// ---------- the window the site plays in ----------
+const WW = 1560, S = WW / 1920, WH = Math.round(1080 * S), BAR = 38;
+const WX = (W - WW) / 2, WY = 66;
 
-// ---------- timeline language ----------
+/** A clip's own time with its idle spans (page and cursor still, an answer on its way) cut to KEEP s:
+ *  `u` turns clip time into this busy time, `t` turns it back. */
+const KEEP = 0.3;
+function busy(clip: string) {
+  const idle = (CLIPS[clip].idle ?? []).filter(([a, b]) => b - a > KEEP);
+  const u = (t: number) => { let s = 0; for (const [a, b] of idle) { if (t <= a + KEEP) break; s += Math.min(t, b) - a - KEEP; } return t - s; };
+  const t = (x: number) => { let s = 0; for (const [a, b] of idle) { if (x <= a + KEEP - s) break; s += b - a - KEEP; } return x + s; };
+  return { u, t };
+}
 
-/** One camera move: at beat `at` (0 = the voice starts, n = the n-th {n} marker) plus `d` seconds. */
-type Key = {
-  at: number; d?: number; shot: string; url: string;
-  look?: string | Box; // box to frame (name from boxes.json or a box in css px)
-  fill?: number;
-  pop?: string | Box; // lift this piece off the page
-  cursor?: string | Box; // move the cursor here and click
-  sfx?: string; burst?: boolean;
-};
-type Badge = { at: number; d?: number; text: string; num?: number };
-type Scene = {
-  id: string; min?: number; extra?: number; say?: string;
-  kicker?: string; title?: string; part?: "Оқушыға" | "Мұғалімге";
-  keys?: Key[]; badges?: Badge[]; mascot?: number;
-  Custom?: (p: { len: number; beat: (n: number, d?: number) => number }) => ReactNode;
-};
-
-const box = (shot: string, b?: string | Box) => (typeof b === "string" ? BOXES[shot]?.[b] : b);
-const frameAt = (id: string) => (n: number, d = 0) => LEAD + Math.round(((n === 0 ? 0 : VO[id]?.beats[n - 1] ?? 0) + d) * FPS);
-const lengthOf = (s: Scene) => Math.max(s.min ?? 0, LEAD + Math.ceil((VO[s.id]?.dur ?? 3) * FPS) + TAIL + (s.extra ?? 0) + T);
-
-// ---------- the screen stage ----------
-
-// a wide window: the page fills almost the whole frame, cropped top-to-bottom rather than shrunk
-const WIN_W = 1760;
-const WIN_X = (1920 - WIN_W) / 2;
-const WIN_Y = 122;
-const BAR = 44;
-const BODY_H = 1080 - WIN_Y - BAR - 24;
-const VH = (SHOT_W * BODY_H) / WIN_W; // shot height visible at zoom 1
-/** Without a look, frame the page without its side menu. */
-const CONTENT: Box = { x: 290, y: 0, w: 1150, h: 480 };
-const EASE = Easing.bezier(0.6, 0, 0.2, 1);
-
-function Stage({ id, keys }: { id: string; keys: Key[] }) {
-  const f = useCurrentFrame();
-  const beat = frameAt(id);
-  const at = keys.map((k) => beat(k.at, k.d));
-  const views = keys.map((k) => viewOf(box(k.shot, k.look) ?? CONTENT, k.fill ?? 0.92, 2.3, VH, CONTENT.x));
-  let i = 0;
-  while (i + 1 < keys.length && f >= at[i + 1]) i++;
-  const p = interpolate(f, [at[i], at[i] + 20], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: EASE });
-  const prev = i > 0 ? i - 1 : 0;
-  const drift = 1 + 0.015 * Math.min(1, (f - at[i]) / 120); // slow push-in while holding
-  const cur: View = keys[i].shot === keys[prev].shot ? mixView(views[prev], views[i], i === 0 ? 1 : p) : views[i];
-  const view = { ...cur, z: cur.z * drift };
-  const s = WIN_W / SHOT_W;
-  const toScreen = (x: number, y: number) => ({ x: WIN_X + (x - view.ox) * view.z * s, y: WIN_Y + BAR + (y - view.oy) * view.z * s });
-  const k = keys[i];
-  const popBox = box(k.shot, k.pop);
-  const pop = popBox ? interpolate(f, [at[i] + 10, at[i] + 26], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.back(1.4)) }) : 0;
-  // cursor: glides from where it was to the target, clicks on arrival
-  const tgt = box(k.shot, k.cursor);
-  let cursor: ReactNode = null;
-  if (tgt) {
-    const lastTgt = [...keys.slice(0, i)].reverse().map((x) => box(x.shot, x.cursor)).find(Boolean);
-    const end = toScreen(tgt.x + Math.min(tgt.w / 2, 60), tgt.y + tgt.h / 2);
-    const from = lastTgt ? toScreen(lastTgt.x + Math.min(lastTgt.w / 2, 60), lastTgt.y + lastTgt.h / 2) : { x: end.x + 260, y: end.y + 220 };
-    const m = interpolate(f, [at[i] + 4, at[i] + 22], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: EASE });
-    cursor = <Cursor x={from.x + (end.x - from.x) * m} y={from.y + (end.y - from.y) * m} click={interpolate(f, [at[i] + 22, at[i] + 36], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })} opacity={ease(f, at[i], at[i] + 6, 0, 1)} />;
+/** Frame by frame: which clip is on screen and at what time, so the click lands on the spoken word.
+ *  Before a click the clip plays its lead-in (cursor on its way), at most 1.5× and in at most 40% of the time
+ *  since the last click: what does not fit is skipped from its start, and a crossfade covers the jump.
+ *  After a click the result plays, faster (up to 3×) when the next click comes soon. All in busy time. */
+type Shot = { clip: string; t: number; seg: number };
+export function planScene(s: Scene, len: number) {
+  const segs = s.segs ?? [];
+  const beat = frameAt(s.id);
+  const at = segs.map((g) => beat(g.beat, g.d));
+  const marks = segs.map((g) => {
+    const m = CLIPS[g.clip].marks.find((m) => m.label === g.mark)!, w = busy(g.clip);
+    return { pre: w.u(m.pre), at: w.u(g.at ?? m.at), end: w.u(m.end), t: w.t };
+  });
+  const lead = segs.map((_, k) => (k === 0 ? at[0] : Math.min(Math.round(((marks[k].at - marks[k].pre) * FPS) / 1.5), Math.round(0.4 * (at[k] - at[k - 1])), 40)));
+  const start = segs.map((_, k) => (k === 0 ? 0 : at[k] - lead[k]));
+  const avail = segs.map((_, k) => (k + 1 < segs.length ? start[k + 1] : len) - at[k]);
+  const rate = segs.map((g, k) => { const need = (marks[k].end - marks[k].at) * FPS; return Math.max(g.speed ?? 1, need > avail[k] * 1.2 ? Math.min(3, need / avail[k]) : 1); });
+  const shots: Shot[] = [];
+  for (let f = 0; f < len; f++) {
+    let k = 0;
+    while (k + 1 < segs.length && f >= start[k + 1]) k++;
+    const m = marks[k];
+    let u: number;
+    if (f >= at[k]) u = Math.min(m.end - 0.04, m.at + ((f - at[k]) / FPS) * rate[k]);
+    else if (k === 0) u = Math.max(m.pre, m.at - (at[0] - f) / FPS); // never what came before the mark (the page it came from)
+    else u = interpolate(f, [start[k], at[k]], [Math.max(m.pre, m.at - (lead[k] * 1.5) / FPS), m.at]);
+    shots.push({ clip: segs[k].clip, t: m.t(u), seg: k });
   }
-  const enter = useIn(0, 20);
-  const changing = i > 0 && keys[i].shot !== keys[prev].shot;
-  const burstAt = k.burst ? (() => { const b = box(k.shot, k.look) ?? { x: 720, y: 450, w: 0, h: 0 }; return toScreen(b.x + b.w / 2, b.y + b.h / 2); })() : null;
+  const report = segs.map((g, k) => ({ mark: g.mark, at: at[k], lead: lead[k], skipped: +Math.max(0, marks[k].at - marks[k].pre - (k === 0 ? at[0] : lead[k] * 1.5) / FPS).toFixed(2), rate: +rate[k].toFixed(2), shown: +Math.min(1, (avail[k] * rate[k]) / FPS / Math.max(0.01, marks[k].end - marks[k].at)).toFixed(2), hold: avail[k] }));
+  return { shots, report };
+}
+const PLANS: Record<string, Shot[]> = Object.fromEntries(SCENES.map((s, i) => [s.id, s.segs ? planScene(s, LENGTHS[i]).shots : []]));
+
+/** Clicks and typing as they happen on screen, in scene frames. */
+function events(id: string) {
+  const plan = PLANS[id];
+  const clicks: { f: number; x: number; y: number }[] = [], typing: { f: number; len: number }[] = [];
+  for (let f = 1; f < plan.length; f++) {
+    const a = plan[f - 1], b = plan[f];
+    if (a.clip !== b.clip || b.t <= a.t) continue;
+    for (const c of CLIPS[b.clip].cursor) if (c.click && c.t > a.t && c.t <= b.t) clicks.push({ f, x: c.x, y: c.y });
+    for (const k of CLIPS[b.clip].keys ?? []) if (k.from > a.t && k.from <= b.t) {
+      let e = f;
+      while (e < plan.length && plan[e].clip === b.clip && plan[e].t < k.to) e++;
+      if (e > f + 2) typing.push({ f, len: e - f });
+    }
+  }
+  return { clicks, typing };
+}
+const EVENTS = Object.fromEntries(SCENES.filter((s) => s.segs).map((s) => [s.id, events(s.id)]));
+
+function cursorAt(clip: string, t: number) {
+  const pts = CLIPS[clip].cursor;
+  let i = 0;
+  while (i + 1 < pts.length && pts[i + 1].t <= t) i++;
+  const a = pts[i], b = pts[i + 1];
+  if (!b || b.t === a.t) return { x: a.x, y: a.y };
+  const e = Math.max(0, Math.min(1, (t - a.t) / (b.t - a.t)));
+  const k = e < 0.5 ? 4 * e * e * e : 1 - (-2 * e + 2) ** 3 / 2;
+  return { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k };
+}
+
+function ClipFrame({ clip, t, opacity = 1 }: { clip: string; t: number; opacity?: number }) {
+  return (
+    <AbsoluteFill style={{ opacity }}>
+      <Freeze frame={Math.max(0, Math.round(t * FPS))}>
+        <OffthreadVideo src={staticFile(`clips/${clip}.mp4`)} muted style={{ width: WW, height: WH }} />
+      </Freeze>
+    </AbsoluteFill>
+  );
+}
+
+function Cursor({ x, y, click }: { x: number; y: number; click: number }) {
+  return (
+    <div style={{ position: "absolute", left: x, top: y, pointerEvents: "none" }}>
+      {click > 0 && click < 1 && (
+        <>
+          <div style={{ position: "absolute", left: -40, top: -40, width: 80, height: 80, borderRadius: 40, border: `5px solid ${C.gold}`, opacity: 1 - click, transform: `scale(${0.3 + click * 1.1})` }} />
+          <div style={{ position: "absolute", left: -18, top: -18, width: 36, height: 36, borderRadius: 18, background: C.gold, opacity: 0.45 * (1 - click), transform: `scale(${0.5 + click})` }} />
+        </>
+      )}
+      <svg width="44" height="52" viewBox="0 0 24 28" style={{ transform: `scale(${1 - 0.18 * Math.sin(Math.PI * Math.min(1, click * 2.5))})`, transformOrigin: "2px 1px", filter: "drop-shadow(0 4px 6px rgba(0,0,0,.35))" }}>
+        <path d="M2 1 L2 21 L7.5 16 L11 25 L14.5 23.5 L11 15 L18.5 15 Z" fill={NAVY} stroke="#fff" strokeWidth="1.8" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
+}
+
+/** A gold ring drawn around a box, with a label that pops out beside it. */
+function NoteMark({ box, text, f0, len, f }: { box: Box; text: string; f0: number; len: number; f: number }) {
+  const pad = 12, x = box.x * S - pad, y = box.y * S - pad, w = box.w * S + pad * 2, h = box.h * S + pad * 2;
+  const draw = ease(f, f0, f0 + 16), out = ease(f, f0 + len - 8, f0 + len, 1, 0), lab = pop(f, f0 + 8);
+  const per = 2 * (w + h);
+  const below = y + h + 70 < WH;
+  return (
+    <div style={{ position: "absolute", inset: 0, opacity: out }}>
+      <svg width={WW} height={WH} style={{ position: "absolute", inset: 0 }}>
+        <rect x={x} y={y} width={w} height={h} rx={16} fill="none" stroke={C.gold} strokeWidth={6} strokeDasharray={per} strokeDashoffset={per * (1 - draw)} strokeLinecap="round" />
+      </svg>
+      <div style={{ position: "absolute", ...(x + w / 2 > WW / 2 ? { right: Math.max(10, WW - x - w) } : { left: Math.max(10, x) }), top: below ? y + h + 14 : y - 70, transform: `scale(${lab})`, transformOrigin: x + w / 2 > WW / 2 ? "100% 0" : "0 0", padding: "10px 22px", borderRadius: 16, background: C.gold, color: C.ink, fontFamily: FONT, fontWeight: 700, fontSize: 30, boxShadow: "0 14px 30px rgba(7,26,74,.35)", whiteSpace: "nowrap" }}>{text}</div>
+    </div>
+  );
+}
+
+/** The site, live, in a window: the recorded clip, retimed to the voice, with the cursor and drawn notes. */
+function Screen({ s, len }: { s: Scene; len: number }) {
+  const f = useCurrentFrame();
+  const plan = PLANS[s.id];
+  const shot = plan[Math.min(f, plan.length - 1)];
+  const k = shot.seg;
+  const switchAt = plan.findIndex((p) => p.seg === k);
+  const prev = k > 0 ? plan[switchAt - 1] : null;
+  // a new clip, or a jump inside one (a page load left out): the new picture fades in over the old
+  const cut = !!prev && (prev.clip !== shot.clip || Math.abs(plan[switchAt].t - prev.t) > 0.3);
+  const fadeIn = cut ? ease(f, switchAt, switchAt + 8) : 1;
+  const { clicks } = EVENTS[s.id];
+  const lastClick = [...clicks].reverse().find((c) => c.f <= f);
+  const click = lastClick ? (f - lastClick.f) / 14 : 1;
+  const punch = lastClick && f - lastClick.f < 16 ? Math.sin((Math.PI * (f - lastClick.f)) / 16) * 0.022 : 0;
+  const cur = cursorAt(shot.clip, shot.t);
+  const enter = spring({ frame: f, fps: FPS, config: { damping: 17, mass: 0.9 } });
+  const drift = 1 + 0.015 * (f / len);
+  const notes = (s.notes ?? []).map((n) => {
+    const b = typeof n.box === "string" ? CLIPS[n.clip].boxes[n.box] : n.box;
+    return { ...n, b, f0: frameAt(s.id)(n.beat, n.d), l: Math.round((n.len ?? 2.2) * FPS) };
+  });
+  return (
+    <div style={{ position: "absolute", left: WX, top: WY, width: WW, transform: `perspective(2200px) translateY(${(1 - enter) * 220}px) rotateX(${(1 - enter) * 12}deg) scale(${0.9 + 0.1 * enter})`, transformOrigin: "50% 100%" }}>
+      <div style={{ borderRadius: 22, overflow: "hidden", background: "#fff", boxShadow: "0 60px 120px rgba(3,10,40,.55), 0 0 0 1px rgba(255,255,255,.25)" }}>
+        <div style={{ height: BAR, display: "flex", alignItems: "center", gap: 9, padding: "0 18px", background: "#e9effc" }}>
+          {["#ff5f57", "#febc2e", "#28c840"].map((c) => <span key={c} style={{ width: 13, height: 13, borderRadius: 7, background: c }} />)}
+          <div style={{ marginLeft: 16, width: 520, height: 26, borderRadius: 13, background: "#fff", display: "flex", alignItems: "center", padding: "0 14px", fontFamily: FONT, fontSize: 15, color: C.muted, fontWeight: 500 }}>🔒&nbsp; adebietlab.vercel.app</div>
+        </div>
+        <div style={{ position: "relative", width: WW, height: WH, overflow: "hidden" }}>
+          <div style={{ position: "absolute", inset: 0, transform: `scale(${drift + punch})`, transformOrigin: `${cur.x * S}px ${cur.y * S}px` }}>
+            {cut && fadeIn < 1 && <ClipFrame clip={prev!.clip} t={prev!.t} />}
+            <ClipFrame clip={shot.clip} t={shot.t} opacity={fadeIn} />
+            {notes.map((n, i) => n.b && f >= n.f0 && f < n.f0 + n.l && n.clip === shot.clip && <NoteMark key={i} box={n.b} text={n.text} f0={n.f0} len={n.l} f={f} />)}
+            <Cursor x={cur.x * S} y={cur.y * S} click={click} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------- the brand around it ----------
+function Backdrop({ children, dark = false }: { children?: ReactNode; dark?: boolean }) {
+  const f = useCurrentFrame();
+  const blob = (color: string, size: number, x: number, y: number, ph: number, o = 0.7): React.CSSProperties => ({
+    position: "absolute", width: size, height: size, borderRadius: "50%", background: `radial-gradient(circle, ${color} 0%, transparent 68%)`,
+    left: x + Math.sin(f / 60 + ph) * 60, top: y + Math.cos(f / 75 + ph) * 40, opacity: o,
+  });
+  return (
+    <AbsoluteFill style={{ background: dark ? `linear-gradient(160deg, #0a1f5c 0%, ${NAVY} 70%)` : `linear-gradient(140deg, ${C.hero} 0%, ${C.navyDeep} 55%, #0d2470 100%)`, overflow: "hidden" }}>
+      <div style={blob(C.blobA, 1300, 1050, -500, 0)} />
+      <div style={blob(C.blobB, 900, -300, 500, 2, 0.55)} />
+      <div style={blob(C.primary, 1000, 300, -500, 4, 0.5)} />
+      {Array.from({ length: 22 }, (_, i) => {
+        const x = (i * 397) % W, y = (H + 80 - ((f * (0.6 + (i % 5) * 0.25) + i * 211) % (H + 160)));
+        return <span key={i} style={{ position: "absolute", left: x, top: y, width: 4 + (i % 3) * 3, height: 4 + (i % 3) * 3, borderRadius: 6, background: i % 4 ? "rgba(255,255,255,.35)" : C.gold, opacity: 0.6 }} />;
+      })}
+      {children}
+    </AbsoluteFill>
+  );
+}
+
+const ICONS: Record<string, typeof House> = { key: KeyRound, home: House, book: BookOpen, wave: AudioLines, map: MapIcon, chat: MessageCircle, pen: PenLine, star: Star, globe: Globe, trophy: Trophy, wand: WandSparkles, chart: ChartColumn };
+
+/** The scene's number and name: big over the window first, then tucked into the corner. */
+function TitleCard({ s }: { s: Scene }) {
+  const f = useCurrentFrame();
+  const Icon = ICONS[s.icon ?? "star"];
+  const big = ease(f, 46, 58, 1, 0), chip = pop(f, 50, 14);
+  const words = (s.title ?? "").split(" ");
   return (
     <>
-      <div style={{ position: "absolute", left: WIN_X, top: WIN_Y, transform: `translateY(${(1 - enter) * 160}px) scale(${0.94 + 0.06 * enter})`, opacity: Math.min(1, enter * 1.4), transformOrigin: "50% 0" }}>
-        <Window url={k.url} width={WIN_W} height={BODY_H}>
-          {changing && <ShotView src={keys[prev].shot} view={views[prev]} width={WIN_W} opacity={1 - p} />}
-          <ShotView src={k.shot} view={view} width={WIN_W} opacity={changing ? p : 1} />
-          <div style={{ position: "absolute", inset: 0, background: "rgba(11,31,77,.42)", opacity: pop }} />
-          <div style={{ position: "absolute", top: -200, bottom: -200, width: 260, background: "linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent)", transform: `translateX(${ease(f, 8, 40, -400, WIN_W + 400)}px) rotate(14deg)` }} />
-        </Window>
-      </div>
-      {popBox && pop > 0 && (
-        <div style={{ position: "absolute", left: 0, right: 0, top: WIN_Y + BAR, height: BODY_H, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <PopOut src={k.shot} box={popBox} p={pop} maxW={1500} maxH={BODY_H - 140} />
+      <div style={{ position: "absolute", inset: 0, background: `linear-gradient(90deg, rgba(7,26,74,.94) 0%, rgba(7,26,74,.75) 45%, rgba(7,26,74,0) 85%)`, opacity: big }} />
+      <div style={{ position: "absolute", left: 170, top: 300, fontFamily: FONT, color: "#fff", opacity: big, transform: `translateY(${(1 - big) * -40}px)` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 26, transform: `translateX(${(1 - pop(f, 0, 16)) * -120}px)`, opacity: Math.min(1, f / 6) }}>
+          <span style={{ fontSize: 150, fontWeight: 700, lineHeight: 1, color: "transparent", WebkitTextStroke: `4px ${C.gold}` }}>{s.no}</span>
+          <span style={{ display: "grid", placeItems: "center", width: 110, height: 110, borderRadius: 32, background: C.gold, transform: `rotate(${(1 - pop(f, 4, 18)) * -120}deg) scale(${pop(f, 4, 18)})` }}><Icon size={60} color={C.ink} strokeWidth={2.2} /></span>
         </div>
-      )}
-      {cursor}
-      {burstAt && <Burst x={burstAt.x} y={burstAt.y} start={at[i] + 8} />}
+        <div style={{ marginTop: 26, fontSize: 104, fontWeight: 700, lineHeight: 1.02, maxWidth: 1250, letterSpacing: -2 }}>
+          {words.map((w, i) => {
+            const p = spring({ frame: f - 6 - i * 3, fps: FPS, config: { damping: 14, mass: 0.6 } });
+            return <span key={i} style={{ display: "inline-block", marginRight: 26, opacity: Math.min(1, p * 1.5), transform: `translateY(${(1 - p) * 60}px) rotate(${(1 - p) * 8}deg)` }}>{w}</span>;
+          })}
+        </div>
+        {s.who && <div style={{ marginTop: 22, display: "inline-block", padding: "10px 26px", borderRadius: 999, background: "rgba(255,255,255,.16)", border: "2px solid rgba(255,255,255,.35)", fontSize: 34, fontWeight: 700, opacity: pop(f, 14) }}>{s.who}</div>}
+      </div>
+      <div style={{ position: "absolute", left: WX, top: 12, height: 44, display: "flex", alignItems: "center", gap: 14, fontFamily: FONT, color: "#fff", transform: `scale(${chip})`, transformOrigin: "0 50%" }}>
+        <span style={{ display: "grid", placeItems: "center", width: 44, height: 44, borderRadius: 13, background: C.gold }}><Icon size={26} color={C.ink} strokeWidth={2.4} /></span>
+        <span style={{ fontSize: 30, fontWeight: 700, color: C.gold }}>{s.no}</span>
+        <span style={{ fontSize: 30, fontWeight: 700 }}>{s.title}</span>
+      </div>
+      {s.who && <div style={{ position: "absolute", right: WX, top: 16, padding: "6px 20px", borderRadius: 999, background: "rgba(255,255,255,.14)", border: "2px solid rgba(255,255,255,.3)", fontFamily: FONT, fontWeight: 700, fontSize: 24, color: "#fff", transform: `scale(${chip})`, transformOrigin: "100% 50%" }}>{s.who}</div>}
     </>
   );
 }
 
-/** Kicker and title above the window; the title changes word by word. */
-function Head({ kicker, title, part }: { kicker?: string; title?: string; part?: string }) {
-  const f = useCurrentFrame();
-  return (
-    <div style={{ position: "absolute", left: WIN_X, right: WIN_X, top: 30, height: 80, display: "flex", alignItems: "center", gap: 22, fontFamily: FONT, color: C.ink }}>
-      {kicker && <Chip style={{ fontSize: 22, opacity: useIn(2) }}>{kicker}</Chip>}
-      {title && (
-        <span style={{ position: "relative" }}>
-          <Words text={title} delay={4} style={{ fontSize: 48, fontWeight: 700, letterSpacing: -1, whiteSpace: "nowrap" }} />
-          <span style={{ position: "absolute", left: 0, right: 0, bottom: -6, height: 6, borderRadius: 3, background: C.gold, transformOrigin: "0 50%", transform: `scaleX(${ease(f, 14, 34, 0, 1)})` }} />
-        </span>
-      )}
-      {part && <span style={{ marginLeft: "auto", fontSize: 22, fontWeight: 700, color: C.muted, opacity: useIn(8) }}>{part}</span>}
-    </div>
-  );
-}
-
-/** What is being said, under the window, piece by piece as the voice reaches each beat. */
-function Subtitle({ id }: { id: string }) {
+/** What is being said, word by word: the word being spoken lights up. */
+function Karaoke({ id, bottom = 22, size = 38 }: { id: string; bottom?: number; size?: number }) {
   const f = useCurrentFrame();
   const v = VO[id];
   if (!v) return null;
-  const starts = v.say.length === v.beats.length ? v.beats : [0, ...v.beats];
-  const beat = frameAt(id);
-  const times = starts.map((t) => LEAD + Math.round(t * FPS));
+  const beats = v.beats.map((x) => x ?? 0);
+  const starts = v.say.length === beats.length ? beats : [0, ...beats];
+  const ends = [...starts.slice(1), v.dur - 0.25];
+  const t = (f - LEAD) / FPS;
   let i = -1;
-  times.forEach((t, k) => { if (f >= t - 2) i = k; });
-  const endF = beat(0) + v.dur * FPS + 6;
-  if (i < 0 || f > endF) return null;
-  const o = Math.min(ease(f, times[i] - 2, times[i] + 6, 0, 1), ease(f, endF - 6, endF, 1, 0));
+  starts.forEach((s, k) => { if (t >= s - 0.05) i = k; });
+  if (i < 0 || t > v.dur + 0.2) return null;
   const text = v.say[i].replace(/Әдебиет Лаб/g, "ӘдебиетLab");
+  if (text.length > 64) size = Math.min(size, 32);
+  const words = text.split(" ");
+  const total = words.reduce((a, w) => a + w.length + 1, 0);
+  let acc = 0;
+  const local = (t - starts[i]) / Math.max(0.3, ends[i] - starts[i] - 0.1);
+  const o = Math.min(ease(f, LEAD + starts[i] * FPS - 2, LEAD + starts[i] * FPS + 5), ease(f, LEAD + v.dur * FPS, LEAD + v.dur * FPS + 6, 1, 0));
   return (
-    <div style={{ position: "absolute", left: 0, right: 0, bottom: 34, display: "flex", justifyContent: "center", opacity: o }}>
-      <span style={{ maxWidth: 1500, padding: "14px 30px", borderRadius: 18, background: "rgba(11,31,77,.86)", color: "#fff", fontFamily: FONT, fontSize: 34, fontWeight: 600, lineHeight: 1.25, textAlign: "center", boxShadow: "0 10px 30px rgba(0,0,0,.25)" }}>{text}</span>
+    <div style={{ position: "absolute", left: 0, right: 0, bottom, display: "flex", justifyContent: "center", opacity: o }}>
+      <div style={{ maxWidth: 1640, padding: "12px 30px", borderRadius: 20, background: "rgba(5,16,48,.82)", fontFamily: FONT, fontSize: size, fontWeight: 700, lineHeight: 1.2, textAlign: "center", boxShadow: "0 12px 30px rgba(0,0,0,.3)" }}>
+        {words.map((w, k) => {
+          const a = acc / total; acc += w.length + 1;
+          const b = acc / total;
+          const state = local >= b ? 2 : local >= a ? 1 : 0;
+          return <span key={k} style={{ display: "inline-block", marginRight: "0.28em", color: state === 1 ? C.gold : "#fff", opacity: state === 0 ? 0.5 : 1, transform: `scale(${state === 1 ? 1.06 : 1})` }}>{w}</span>;
+        })}
+      </div>
     </div>
   );
 }
 
-function Badges({ id, badges }: { id: string; badges: Badge[] }) {
+/** Қырантай jumps in from the corner with a word of his own. */
+function React_({ at, text }: { at: number; text: string }) {
   const f = useCurrentFrame();
-  const beat = frameAt(id);
+  const p = pop(f, at, 16, 1.6), out = ease(f, at + 70, at + 82, 1, 0), b = pop(f, at + 8, 12, 2.2);
+  if (f < at || out <= 0) return null;
+  const hop = Math.abs(Math.sin(((f - at) / 10) * Math.PI)) * 14 * Math.max(0, 1 - (f - at) / 40);
   return (
-    <div style={{ position: "absolute", right: 36, top: WIN_Y + 64, display: "flex", flexDirection: "column", gap: 16, alignItems: "flex-end" }}>
-      {badges.map((b, i) => {
-        const start = beat(b.at, b.d);
-        const p = interpolate(f, [start, start + 14], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.back(1.6)) });
-        return (
-          <div key={i} style={{ opacity: p, transform: `scale(${0.6 + 0.4 * p}) rotate(${(1 - p) * -8}deg)`, padding: "16px 26px", borderRadius: 22, background: C.gold, color: C.ink, fontFamily: FONT, fontWeight: 700, fontSize: 30, boxShadow: "0 18px 40px rgba(11,31,77,.3)", display: "flex", alignItems: "baseline", gap: 10 }}>
-            {b.num !== undefined && <span style={{ fontSize: 54, lineHeight: 1 }}><Count to={b.num} start={start} /></span>}
-            {b.text}
+    <div style={{ position: "absolute", right: 0, bottom: 0, width: 600, height: 480, opacity: out }}>
+      <Mascot size={250} style={{ position: "absolute", right: 14, bottom: -30 + (1 - p) * -300 + 0, transform: `translateY(${(1 - p) * 320 - hop}px) rotate(${Math.sin(f / 6) * 5}deg) scaleY(${1 - 0.06 * Math.sin(((f - at) / 4))})`, transformOrigin: "50% 100%" }} />
+      <div style={{ position: "absolute", right: 230, bottom: 210, padding: "16px 28px", borderRadius: "30px 30px 6px 30px", background: "#fff", border: `4px solid ${C.gold}`, color: C.ink, fontFamily: FONT, fontWeight: 700, fontSize: 40, boxShadow: "0 20px 40px rgba(0,0,0,.3)", transform: `scale(${b}) rotate(${(1 - b) * 10}deg)`, transformOrigin: "100% 100%", whiteSpace: "nowrap" }}>{text}</div>
+    </div>
+  );
+}
+
+function ScreenScene({ s, len }: { s: Scene; len: number }) {
+  return (
+    <Backdrop>
+      <Screen s={s} len={len} />
+      <TitleCard s={s} />
+      {s.react && <React_ at={frameAt(s.id)(s.react.beat, s.react.d)} text={s.react.text} />}
+      <Karaoke id={s.id} />
+    </Backdrop>
+  );
+}
+
+// ---------- the brand scenes ----------
+const WALL = ["olen", "karta", "suhbat", "works", "zhattau", "baige", "teacher", "results", "creative", "world", "home", "login"];
+
+function Hook({ len }: { len: number }) {
+  const f = useCurrentFrame();
+  const beat = frameAt("01");
+  const no = beat(1), now = beat(2);
+  const shake = f >= no && f < no + 14 ? Math.sin(f * 2.7) * 16 * (1 - (f - no) / 14) : 0;
+  const words1 = "Әдебиет сабағы…".split(" "), words2 = "тек оқып, мазмұндап берумен бітеді ме?".split(" ");
+  const t = (f - LEAD) / FPS;
+  const said = Math.max(0, Math.min(1, t / ((no - LEAD) / FPS - 0.3)));
+  const all = [...words1, ...words2];
+  const reveal = (i: number) => ease(said * all.length, i - 0.2, i + 0.6);
+  const flyOut = (i: number) => (f < no ? 0 : ease(f, no, no + 16));
+  const flash = f >= no ? ease(f, no, no + 8, 0.9, 0) : 0;
+  const zhoq = pop(f, no, 12, 2.6), zhoqOut = ease(f, now, now + 10, 1, 0);
+  const wipe = ease(f, now, now + 16, 0, 1, Easing.out(Easing.cubic));
+  return (
+    <AbsoluteFill style={{ background: "#050f2e", overflow: "hidden", transform: `translate(${shake}px, ${shake * 0.4}px)` }}>
+      {/* before: grey and slow */}
+      <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", fontFamily: FONT, transform: `scale(${1 + 0.05 * Math.min(1, f / no)})` }}>
+        <BookOpen size={520} color="#1c2b5c" strokeWidth={1.2} style={{ position: "absolute", opacity: 0.6, transform: `rotate(${-6 + Math.sin(f / 30) * 2}deg) translateY(${f * 0.2}px)` }} />
+        <div style={{ position: "relative", textAlign: "center", width: 1500 }}>
+          <div style={{ fontSize: 110, fontWeight: 700, color: "#fff" }}>
+            {words1.map((w, i) => <span key={i} style={{ display: "inline-block", margin: "0 18px", opacity: reveal(i) * (1 - flyOut(i)), transform: `translate(${flyOut(i) * (i - 0.5) * 900}px, ${flyOut(i) * -400}px) rotate(${flyOut(i) * (i ? 40 : -40)}deg)` }}>{w}</span>)}
           </div>
-        );
+          <div style={{ marginTop: 20, fontSize: 70, fontWeight: 600, color: "#a9b6d8" }}>
+            {words2.map((w, i) => { const j = i + words1.length; return <span key={i} style={{ display: "inline-block", margin: "0 12px", opacity: reveal(j) * (1 - flyOut(j)), transform: `translate(${flyOut(j) * (i - 2.5) * 260}px, ${flyOut(j) * (300 + i * 60)}px) rotate(${flyOut(j) * (i % 2 ? 50 : -50)}deg)` }}>{w}</span>; })}
+          </div>
+        </div>
+      </AbsoluteFill>
+      {f >= no && (
+        <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", opacity: zhoqOut }}>
+          <div style={{ fontFamily: FONT, fontSize: 330, fontWeight: 700, color: C.gold, letterSpacing: -8, transform: `scale(${2.6 - 1.6 * zhoq}) rotate(${(1 - zhoq) * -8}deg)`, opacity: Math.min(1, zhoq * 2), textShadow: "0 30px 80px rgba(255,184,0,.35)" }}>Жоқ!</div>
+        </AbsoluteFill>
+      )}
+      {/* after: the lab opens */}
+      {f >= now && (
+        <AbsoluteFill style={{ clipPath: `circle(${wipe * 130}% at 50% 50%)` }}>
+          <Backdrop>
+            <div style={{ position: "absolute", inset: -300, transform: "perspective(1800px) rotateX(28deg) rotateZ(-10deg)", opacity: 0.55 }}>
+              {[0, 1, 2, 3].map((r) => (
+                <div key={r} style={{ display: "flex", gap: 34, marginBottom: 34, transform: `translateX(${(r % 2 ? -1 : 1) * (f - now) * 2.2 - 500 - r * 200}px)` }}>
+                  {[...WALL, ...WALL].slice(r * 3, r * 3 + 9).map((src, i) => {
+                    const z = pop(f, now + 4 + i * 2 + r * 3, 18, 1.2);
+                    return <Img key={i} src={staticFile(`wall/${src}.jpg`)} style={{ width: 600, borderRadius: 18, opacity: z, transform: `translateZ(${(1 - z) * 900}px) scale(${0.6 + 0.4 * z})`, boxShadow: "0 30px 60px rgba(0,0,0,.4)" }} />;
+                  })}
+                </div>
+              ))}
+            </div>
+            <AbsoluteFill style={{ background: "radial-gradient(circle at 50% 50%, rgba(13,36,112,.25), rgba(7,26,74,.88) 70%)" }} />
+            <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", fontFamily: FONT, color: "#fff", textAlign: "center" }}>
+              <div style={{ fontSize: 76, fontWeight: 700, opacity: pop(f, now + 2), transform: `translateY(${(1 - pop(f, now + 2)) * 40}px)` }}>Енді әр шығарманы —</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 30, marginTop: 10 }}>
+                <Flask f={f - now - 10} />
+                <div style={{ fontSize: 200, fontWeight: 700, letterSpacing: -6, lineHeight: 1 }}>
+                  {"зерттейміз!".split("").map((ch, i) => {
+                    const p = spring({ frame: f - now - 12 - i * 2, fps: FPS, config: { damping: 9, mass: 0.6 } });
+                    return <span key={i} style={{ display: "inline-block", color: C.gold, opacity: Math.min(1, p * 2), transform: `translateY(${(1 - p) * -160}px) scale(${0.4 + 0.6 * p})` }}>{ch}</span>;
+                  })}
+                </div>
+              </div>
+            </AbsoluteFill>
+            <Burst x={960} y={600} at={now + 22} n={26} />
+            <div style={{ position: "absolute", left: 0, bottom: 40 }}><Ornament width={W * ease(f, now + 10, now + 50)} /></div>
+          </Backdrop>
+        </AbsoluteFill>
+      )}
+      <AbsoluteFill style={{ background: C.gold, opacity: flash }} />
+      <Karaoke id="01" bottom={40} size={34} />
+    </AbsoluteFill>
+  );
+}
+
+/** The site's flask, bubbling. */
+function Flask({ f, size = 170 }: { f: number; size?: number }) {
+  const p = pop(f, 0, 16, 2);
+  return (
+    <div style={{ position: "relative", width: size, height: size, transform: `scale(${p}) rotate(${(1 - p) * -40 + Math.sin(f / 8) * 4}deg)` }}>
+      <div style={{ position: "absolute", inset: 0, borderRadius: size * 0.28, background: "#fff", display: "grid", placeItems: "center", boxShadow: "0 20px 50px rgba(0,0,0,.35)" }}><FlaskConical size={size * 0.56} color={C.primary} strokeWidth={2.2} /></div>
+      {Array.from({ length: 7 }, (_, i) => {
+        const t = ((f + i * 9) % 50) / 50;
+        return <span key={i} style={{ position: "absolute", left: size * (0.3 + 0.08 * i) + Math.sin(f / 5 + i) * 8, top: -t * size * 0.9, width: 10 + (i % 3) * 6, height: 10 + (i % 3) * 6, borderRadius: 20, background: i % 2 ? C.gold : "#9fc0ff", opacity: f > 0 ? (1 - t) * 0.9 : 0 }} />;
       })}
     </div>
   );
 }
 
-/** Қырантай peeks in from the corner, with a word of his own. */
-function Peek({ at, say }: { at: number; say?: string }) {
-  const f = useCurrentFrame();
-  const p = interpolate(f, [at, at + 16], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.back(1.5)) });
-  const b = interpolate(f, [at + 12, at + 24], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.back(2)) });
+function Burst({ x, y, at, n = 18 }: { x: number; y: number; at: number; n?: number }) {
+  const f = useCurrentFrame() - at;
+  if (f < 0 || f > 36) return null;
+  const p = Easing.out(Easing.cubic)(f / 36);
   return (
-    <>
-      <Mascot size={210} style={{ position: "absolute", right: 30, bottom: -20 + (1 - p) * 260, transform: `rotate(${Math.sin(f / 9) * 4}deg)` }} />
-      {say && <div style={{ position: "absolute", right: 200, bottom: 190, padding: "14px 24px", borderRadius: "26px 26px 4px 26px", background: C.white, color: C.ink, fontFamily: FONT, fontSize: 30, fontWeight: 700, boxShadow: "0 16px 36px rgba(11,31,77,.28)", border: `3px solid ${C.gold}`, opacity: b, transform: `scale(${0.5 + 0.5 * b})`, transformOrigin: "100% 100%" }}>{say}</div>}
-    </>
+    <div style={{ position: "absolute", left: x, top: y }}>
+      {Array.from({ length: n }, (_, i) => {
+        const a = (i / n) * Math.PI * 2 + (i % 2) * 0.2, r = 40 + (220 + (i % 4) * 60) * p;
+        return <span key={i} style={{ position: "absolute", width: i % 3 ? 14 : 22, height: i % 3 ? 14 : 8, borderRadius: 4, background: [C.gold, "#fff", "#9fc0ff", C.gold][i % 4], left: Math.cos(a) * r, top: Math.sin(a) * r + p * p * 80, opacity: 1 - f / 36, transform: `rotate(${f * 12 + i * 30}deg)` }} />;
+      })}
+    </div>
   );
 }
 
-function ScreenScene({ s, len }: { s: Scene; len: number }) {
-  const beat = frameAt(s.id);
+function Logo({ f, size = 1 }: { f: number; size?: number }) {
+  const tile = pop(f, 0, 18, 2);
   return (
-    <PageBg>
-      <Head kicker={s.kicker} title={s.title} part={s.part} />
-      {s.keys && <Stage id={s.id} keys={s.keys} />}
-      {s.Custom && <s.Custom len={len} beat={beat} />}
-      {s.badges && <Badges id={s.id} badges={s.badges} />}
-      {s.mascot !== undefined && <Peek at={beat(s.mascot)} say={s.say} />}
-      <Subtitle id={s.id} />
-    </PageBg>
+    <div style={{ display: "flex", alignItems: "center", gap: 34 * size, fontFamily: FONT, color: "#fff" }}>
+      <span style={{ display: "grid", placeItems: "center", width: 150 * size, height: 150 * size, borderRadius: 42 * size, background: "#fff", transform: `scale(${tile}) rotate(${(1 - tile) * -180}deg)`, boxShadow: "0 24px 60px rgba(0,0,0,.35)" }}><FlaskConical size={84 * size} color={C.primary} strokeWidth={2.2} /></span>
+      <span style={{ fontSize: 150 * size, fontWeight: 700, letterSpacing: -3 * size, lineHeight: 1 }}>
+        {"ӘдебиетLab".split("").map((ch, i) => {
+          const p = spring({ frame: f - 6 - i * 2, fps: FPS, config: { damping: 12, mass: 0.6 } });
+          return <span key={i} style={{ display: "inline-block", color: i >= 7 ? C.gold : "#fff", opacity: Math.min(1, p * 2), transform: `translateY(${(1 - p) * 80}px) rotate(${(1 - p) * 20}deg)` }}>{ch}</span>;
+        })}
+      </span>
+    </div>
   );
 }
 
-// ---------- the brand scenes ----------
-
-const WALL = ["home", "olen-syll", "karta", "chat", "card-1", "map", "t-analytics", "zhattau-2", "baige", "creative-typed", "works", "t-create", "quiz-pick", "tarih", "egeri"];
-
-function Hook({ len, beat }: { len: number; beat: (n: number, d?: number) => number }) {
+function Intro() {
   const f = useCurrentFrame();
-  const b1 = beat(1), b2 = beat(2);
-  const big = interpolate(f, [b2, b2 + 14], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.back(1.8)) });
-  const logo = useIn(b2 + 34, 14);
-  const q = ease(f, b1 - 4, b1 + 6, 1, 0);
+  const beat = frameAt("02");
+  const b1 = beat(1), b2 = beat(2), b3 = beat(3);
+  const up = ease(f, b2 - 6, b2 + 14);
+  const lap = pop(f, b2, 22, 1.2), ph = pop(f, b2 + 8, 22, 1.4), dk = pop(f, b2 + 16, 22, 1.2);
+  const stamp = pop(f, b3, 14, 2.4);
+  const tag = "Қазақ әдебиетінің веб-зертханасы";
+  const typed = Math.round(ease(f, b1 + 30, b1 + 62) * tag.length);
+  const chips: [typeof Monitor, string, number][] = [[Monitor, "Компьютерде", b2 + 6], [Smartphone, "Телефонда", b2 + 14], [Moon, "Қараңғы режимде", b2 + 22]];
   return (
-    <AbsoluteFill style={{ background: C.navyDeep, overflow: "hidden" }}>
-      {/* a slow wall of real screens behind everything */}
-      <div style={{ position: "absolute", inset: -200, transform: "perspective(1600px) rotateX(24deg) rotateZ(-8deg)", opacity: 0.35 }}>
-        {[0, 1, 2, 3].map((r) => (
-          <div key={r} style={{ display: "flex", gap: 28, marginBottom: 28, transform: `translateX(${(r % 2 ? -1 : 1) * (f * 1.4) - 400 - r * 160}px)` }}>
-            {[...WALL, ...WALL].slice(r * 3, r * 3 + 9).map((src, i) => <Img key={i} src={staticFile(`shots/${src}.png`)} style={{ width: 560, borderRadius: 16 }} />)}
-          </div>
-        ))}
-      </div>
-      <AbsoluteFill style={{ background: `radial-gradient(circle at 50% 45%, rgba(19,48,156,.55), ${C.navyDeep} 75%)` }} />
-      <AbsoluteFill style={{ fontFamily: FONT, color: "#fff", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
-        <div style={{ position: "absolute", top: 380, fontSize: 68, fontWeight: 700, opacity: q }}><Words text="Әдебиетті тек оқып шығу жеткілікті ме?" delay={LEAD} step={4} /></div>
-        {f >= b1 - 2 && <div style={{ position: "absolute", top: 300, fontSize: 64, fontWeight: 700, transform: `translateY(${-logo * 60}px)` }}><Words text="Ал егер әр шығарманы" delay={b1 - 2} step={3} /></div>}
-        <div style={{ position: "absolute", top: 390, fontSize: 190, fontWeight: 700, color: C.gold, letterSpacing: -4, opacity: Math.min(1, big * 2), transform: `scale(${0.4 + 0.6 * big}) translateY(${-logo * 50}px)` }}>зерттесек?</div>
-        <div style={{ position: "absolute", top: 700, display: "flex", alignItems: "center", gap: 24, opacity: logo, transform: `translateY(${(1 - logo) * 40}px)` }}>
-          <span style={{ width: 96, height: 96, borderRadius: 28, background: "#fff", display: "grid", placeItems: "center" }}><FlaskConical size={52} color={C.primary} /></span>
-          <span style={{ fontSize: 84, fontWeight: 700 }}>Әдебиет<span style={{ color: C.gold }}>Lab</span></span>
-        </div>
+    <Backdrop>
+      <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", transform: `translateY(${up * -370}px) scale(${1 - 0.5 * up})` }}>
+        <Logo f={f - 2} />
+        <div style={{ marginTop: 30, fontFamily: FONT, fontSize: 56, fontWeight: 600, color: "#dfe8ff", minHeight: 70 }}>{tag.slice(0, typed)}<span style={{ opacity: typed > 0 && f % 20 < 10 && typed < tag.length ? 1 : 0, color: C.gold }}>|</span></div>
       </AbsoluteFill>
-      <Burst x={960} y={500} start={b2 + 4} />
-      <div style={{ position: "absolute", left: 0, bottom: 40 }}><Ornament width={1920 * ease(f, b2, b2 + 40, 0, 1)} /></div>
+      {f >= b2 - 4 && (
+        <>
+          <div style={{ position: "absolute", left: 120, top: 250, transform: `perspective(2000px) translateX(${(1 - lap) * -900}px) rotateY(${(1 - lap) * 30 + 8}deg)`, transformOrigin: "0 50%" }}>
+            <div style={{ width: 1040, borderRadius: 22, overflow: "hidden", background: "#fff", boxShadow: "0 50px 100px rgba(0,0,0,.45)" }}>
+              <div style={{ height: 34, background: "#e9effc", display: "flex", alignItems: "center", gap: 8, padding: "0 16px" }}>{["#ff5f57", "#febc2e", "#28c840"].map((c) => <span key={c} style={{ width: 12, height: 12, borderRadius: 6, background: c }} />)}</div>
+              <div style={{ width: 1040, height: 585 }}><OffthreadVideo src={staticFile("clips/home.mp4")} muted style={{ width: 1040, height: 585 }} /></div>
+            </div>
+          </div>
+          <div style={{ position: "absolute", left: 1010, top: 250, opacity: dk, transform: `perspective(2000px) translateY(${(1 - dk) * -500}px) rotateY(-14deg) rotate(4deg)` }}>
+            <div style={{ width: 560, borderRadius: 18, overflow: "hidden", boxShadow: "0 40px 80px rgba(0,0,0,.5)" }}><Img src={staticFile("wall/dark.jpg")} style={{ width: 560, display: "block" }} /></div>
+          </div>
+          <div style={{ position: "absolute", left: 1500, top: 290, transform: `translateY(${(1 - ph) * 800}px) rotate(${-6 + (1 - ph) * 20}deg)` }}>
+            <div style={{ width: 300, height: 640, borderRadius: 46, background: "#0b1230", padding: 11, boxShadow: "0 40px 90px rgba(0,0,0,.5)" }}>
+              <div style={{ width: "100%", height: "100%", borderRadius: 36, overflow: "hidden", position: "relative", background: "#fff" }}>
+                <OffthreadVideo src={staticFile("clips/phone.mp4")} muted style={{ width: 278, height: 601 }} />
+                <div style={{ position: "absolute", top: 8, left: "50%", marginLeft: -45, width: 90, height: 24, borderRadius: 12, background: "#0b1230" }} />
+              </div>
+            </div>
+          </div>
+          <div style={{ position: "absolute", left: 120, top: 878, display: "flex", gap: 18 }}>
+            {chips.map(([Icon, t, at]) => (
+              <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 12, padding: "12px 26px", borderRadius: 999, background: "#fff", color: C.primary, fontFamily: FONT, fontWeight: 700, fontSize: 32, transform: `scale(${pop(f, at, 12, 2)})`, boxShadow: "0 12px 30px rgba(0,0,0,.25)" }}><Icon size={32} /> {t}</span>
+            ))}
+          </div>
+          {f >= b3 && (
+            <div style={{ position: "absolute", left: 1290, top: 770, transform: `scale(${stamp}) rotate(${-10 + (1 - stamp) * -60}deg)`, padding: "22px 40px", borderRadius: 26, background: C.gold, color: C.ink, fontFamily: FONT, fontWeight: 700, fontSize: 50, display: "flex", alignItems: "center", gap: 16, boxShadow: "0 24px 50px rgba(0,0,0,.4)", border: "5px solid #fff" }}>
+              <Download size={48} strokeWidth={2.6} /> Орнатусыз!
+            </div>
+          )}
+          <Burst x={1500} y={880} at={b3 + 6} />
+        </>
+      )}
+      <Karaoke id="02" />
+    </Backdrop>
+  );
+}
+
+function Trust() {
+  const f = useCurrentFrame();
+  const beat = frameAt("15");
+  const items = [
+    { Icon: Sparkles, a: "ЖИ — көмекші", b: "Шешім — мұғалімде", at: LEAD + 4 },
+    { Icon: ShieldCheck, a: "Жеке дерек", b: "сұралмайды", at: beat(1) },
+    { Icon: BookOpenCheck, a: "Авторлық құқық", b: "сақталады", at: beat(2) },
+  ];
+  return (
+    <Backdrop dark>
+      <div style={{ position: "absolute", left: 0, right: 0, top: 130, textAlign: "center", fontFamily: FONT, fontSize: 84, fontWeight: 700, color: "#fff" }}>
+        {"Сенімді әрі қауіпсіз".split(" ").map((w, i) => { const p = spring({ frame: f - 2 - i * 4, fps: FPS, config: { damping: 14 } }); return <span key={i} style={{ display: "inline-block", margin: "0 14px", opacity: p, transform: `translateY(${(1 - p) * 50}px)` }}>{w}</span>; })}
+      </div>
+      <div style={{ position: "absolute", left: 0, right: 0, top: 330, display: "flex", justifyContent: "center", gap: 44, perspective: 1600 }}>
+        {items.map(({ Icon, a, b, at }, i) => {
+          const p = pop(f, at, 20, 1.3);
+          const check = ease(f, at + 14, at + 30);
+          const lit = f >= at ? 1 : 0;
+          return (
+            <div key={i} style={{ width: 500, height: 430, borderRadius: 36, padding: "48px 36px", background: lit ? "rgba(255,255,255,.12)" : "rgba(255,255,255,.04)", border: `3px solid ${lit ? "rgba(255,184,0,.7)" : "rgba(255,255,255,.12)"}`, textAlign: "center", fontFamily: FONT, color: "#fff", opacity: 0.25 + 0.75 * p, transform: `rotateY(${(1 - p) * 70}deg) translateY(${(1 - p) * 60}px) scale(${0.9 + 0.1 * p})` }}>
+              <div style={{ position: "relative", display: "inline-grid", placeItems: "center", width: 130, height: 130, borderRadius: 38, background: C.gold }}>
+                <Icon size={74} color={C.ink} strokeWidth={2.2} />
+                <svg width="60" height="60" viewBox="0 0 60 60" style={{ position: "absolute", right: -22, bottom: -22 }}>
+                  <circle cx="30" cy="30" r="27" fill={C.green} opacity={check > 0 ? 1 : 0} />
+                  <path d="M17 31 L26 40 L44 21" fill="none" stroke="#fff" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="40" strokeDashoffset={40 * (1 - check)} />
+                </svg>
+              </div>
+              <div style={{ marginTop: 44, fontSize: 50, fontWeight: 700, lineHeight: 1.15 }}>{a}</div>
+              <div style={{ marginTop: 6, fontSize: 50, fontWeight: 700, color: C.gold, lineHeight: 1.15 }}>{b}</div>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ position: "absolute", left: 0, top: 40 }}><Ornament opacity={0.5} /></div>
+      <Karaoke id="15" />
+    </Backdrop>
+  );
+}
+
+function Outro({ len }: { len: number }) {
+  const f = useCurrentFrame();
+  const beat = frameAt("16");
+  const b1 = beat(1), b2 = beat(2);
+  const out = ease(f, len - 22, len, 1, 0);
+  const url = pop(f, b2 + 16, 16, 2);
+  const conf = Array.from({ length: 70 }, (_, i) => i);
+  return (
+    <Backdrop>
+      <AbsoluteFill style={{ opacity: out }}>
+        {f > b2 && conf.map((i) => {
+          const t = f - b2 - (i % 10) * 2, x = (i * 271) % W, fall = t * (5 + (i % 5)), sway = Math.sin(t / 8 + i) * 40;
+          return <span key={i} style={{ position: "absolute", left: x + sway, top: -40 + fall, width: 16, height: 10 + (i % 3) * 6, background: [C.gold, "#fff", "#9fc0ff", C.blobB, C.green][i % 5], transform: `rotate(${t * (6 + (i % 7))}deg)`, opacity: t > 0 ? 1 : 0 }} />;
+        })}
+        <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", fontFamily: FONT, color: "#fff", textAlign: "center", transform: `translateY(${ease(f, b1 - 8, b1 + 10) * -120}px)` }}>
+          <Logo f={f - 4} />
+        </AbsoluteFill>
+        <div style={{ position: "absolute", left: 0, right: 0, top: 560, textAlign: "center", fontFamily: FONT, color: "#fff" }}>
+          <div style={{ fontSize: 64, fontWeight: 700 }}>
+            {"Әдебиетті бірге зерттейік!".split(" ").map((w, i) => { const p = spring({ frame: f - b1 - i * 3, fps: FPS, config: { damping: 13 } }); return <span key={i} style={{ display: "inline-block", margin: "0 12px", opacity: Math.min(1, p * 1.5), transform: `translateY(${(1 - p) * 50}px)` }}>{w}</span>; })}
+          </div>
+          <div style={{ marginTop: 16, fontSize: 52, fontWeight: 600, color: "#dfe8ff" }}>
+            {"Сыныбыңызды бүгін ашыңыз".split(" ").map((w, i) => { const p = spring({ frame: f - b2 - i * 3, fps: FPS, config: { damping: 13 } }); return <span key={i} style={{ display: "inline-block", margin: "0 10px", opacity: Math.min(1, p * 1.5), transform: `translateY(${(1 - p) * 50}px)` }}>{w}</span>; })}
+          </div>
+          <div style={{ marginTop: 46, display: "inline-block", padding: "26px 60px", borderRadius: 999, background: C.gold, color: C.ink, fontSize: 60, fontWeight: 700, transform: `scale(${url * (1 + 0.03 * Math.sin(f / 6))})`, boxShadow: `0 0 0 ${10 + 8 * Math.sin(f / 6)}px rgba(255,184,0,.25), 0 20px 50px rgba(0,0,0,.35)` }}>adebietlab.vercel.app</div>
+        </div>
+        <Mascot size={300} style={{ position: "absolute", right: 110, bottom: 60 + Math.abs(Math.sin(f / 9)) * 20, transform: `translateX(${(1 - pop(f, b1, 20, 1.5)) * 600}px) rotate(${Math.sin(f / 7) * 8}deg)` }} />
+        <Burst x={960} y={860} at={b2 + 20} n={30} />
+        <div style={{ position: "absolute", left: 0, top: 34 }}><Ornament /></div>
+        <div style={{ position: "absolute", left: 0, bottom: 34 }}><Ornament /></div>
+      </AbsoluteFill>
+      <AbsoluteFill style={{ background: NAVY, opacity: 1 - out }} />
+    </Backdrop>
+  );
+}
+
+// ---------- between scenes: gold, blue and violet bands sweep across ----------
+type BandsProps = Record<string, never>;
+function Bands({ children, presentationDirection, presentationProgress }: TransitionPresentationComponentProps<BandsProps>) {
+  const p = Easing.inOut(Easing.cubic)(presentationProgress);
+  if (presentationDirection === "exiting") return <AbsoluteFill style={{ transform: `translateX(${-p * 260}px) scale(${1 - 0.06 * p})` }}>{children}</AbsoluteFill>;
+  const edge = (1 - p) * (W + 700) - 300; // the front of the sweep, moving right to left
+  const slant = 260;
+  const band = (off: number, color: string) => (
+    <div style={{ position: "absolute", inset: 0, background: color, clipPath: `polygon(${edge + off}px 0, ${edge + off + 160}px 0, ${edge + off + 160 - slant}px ${H}px, ${edge + off - slant}px ${H}px)` }} />
+  );
+  return (
+    <AbsoluteFill>
+      <AbsoluteFill style={{ clipPath: `polygon(${edge + 480}px 0, ${W + 400}px 0, ${W + 400}px ${H}px, ${edge + 480 - slant}px ${H}px)` }}>{children}</AbsoluteFill>
+      {band(0, C.gold)}{band(160, C.primary)}{band(320, C.blobA)}
     </AbsoluteFill>
   );
 }
+const bands = (): TransitionPresentation<BandsProps> => ({ component: Bands, props: {} });
 
-function Devices({ beat }: { len: number; beat: (n: number, d?: number) => number }) {
-  const f = useCurrentFrame();
-  const ph = interpolate(f, [beat(2), beat(2) + 18], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.back(1.3)) });
-  const dk = interpolate(f, [beat(2, 0.8), beat(2, 0.8) + 18], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.cubic) });
-  const enter = useIn(0, 20);
-  const chips: [typeof Monitor, string, number][] = [[Monitor, "Компьютерде", beat(2)], [Smartphone, "Телефонда", beat(2, 0.5)], [Moon, "Қараңғы режим", beat(2, 1.2)], [Download, "Орнатусыз", beat(3)]];
-  return (
-    <>
-      <div style={{ position: "absolute", left: 150, top: 190, transform: `translateY(${(1 - enter) * 160}px) rotateY(${(1 - enter) * -10}deg)`, opacity: enter }}>
-        <Window url="/oqushy" width={1180}><ShotView src="home" view={FULL} width={1180} /></Window>
-      </div>
-      <div style={{ position: "absolute", left: 1000, top: 300, opacity: dk, transform: `translateX(${(1 - dk) * 300}px) rotate(3deg)` }}>
-        <Window url="/oqushy" width={760}><ShotView src="dark-home" view={FULL} width={760} /></Window>
-      </div>
-      <Phone src="phone-home" style={{ position: "absolute", left: 1420, top: 330, transform: `translateY(${(1 - ph) * 700}px) rotate(-4deg)` }} />
-      <div style={{ position: "absolute", left: 150, top: 960, display: "flex", gap: 16 }}>
-        {chips.map(([Icon, t, at]) => {
-          const p = interpolate(f, [at, at + 12], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.back(1.8)) });
-          return <Chip key={t} style={{ opacity: p, transform: `scale(${0.6 + 0.4 * p})`, fontSize: 26, padding: "12px 22px" }}><Icon size={26} /> {t}</Chip>;
-        })}
-      </div>
-    </>
-  );
-}
-
-function Trust({ beat }: { len: number; beat: (n: number, d?: number) => number }) {
-  const f = useCurrentFrame();
-  const items = [
-    [Sparkles, "ЖИ — көмекші,", "шешім — мұғалімде", 0],
-    [UserCheck, "Оқушыдан жеке дерек", "сұралмайды", 1],
-    [BookOpenCheck, "Авторлық құқық", "сақталады", 2],
-  ] as const;
-  return (
-    <HeroBg>
-      <AbsoluteFill style={{ fontFamily: FONT, color: "#fff", alignItems: "center", justifyContent: "center", gap: 70 }}>
-        <div style={{ fontSize: 70, fontWeight: 700 }}><Words text="Сенімді әрі қауіпсіз" delay={4} /></div>
-        <div style={{ display: "flex", gap: 40 }}>
-          {items.map(([Icon, a, b, n]) => {
-            const st = beat(n);
-            const p = interpolate(f, [st, st + 16], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.back(1.4)) });
-            return (
-              <div key={a} style={{ width: 480, minHeight: 330, padding: "44px 36px", borderRadius: 32, background: "rgba(255,255,255,.12)", border: "2px solid rgba(255,255,255,.28)", textAlign: "center", opacity: p, transform: `translateY(${(1 - p) * 80}px) rotateX(${(1 - p) * 40}deg)` }}>
-                <span style={{ display: "inline-grid", placeItems: "center", width: 96, height: 96, borderRadius: 28, background: C.gold, transform: `rotate(${(1 - p) * -90}deg)` }}><Icon size={52} color={C.ink} /></span>
-                <div style={{ marginTop: 28, fontSize: 38, fontWeight: 700, lineHeight: 1.2 }}>{a}<br /><span style={{ color: C.gold }}>{b}</span></div>
-              </div>
-            );
-          })}
-        </div>
-      </AbsoluteFill>
-      <Subtitle id="15" />
-    </HeroBg>
-  );
-}
-
-function Outro({ len, beat }: { len: number; beat: (n: number, d?: number) => number }) {
-  const f = useCurrentFrame();
-  const url = interpolate(f, [beat(1) + 10, beat(1) + 26], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.back(1.6)) });
-  const out = ease(f, len - 24, len, 1, 0);
-  return (
-    <HeroBg>
-      <AbsoluteFill style={{ fontFamily: FONT, color: "#fff", alignItems: "center", justifyContent: "center", gap: 40, opacity: out }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 28, transform: `scale(${0.8 + 0.2 * useIn(4, 12)})` }}>
-          <span style={{ width: 130, height: 130, borderRadius: 36, background: "#fff", display: "grid", placeItems: "center", transform: `rotate(${Math.sin(f / 14) * 4}deg)` }}><FlaskConical size={72} color={C.primary} /></span>
-          <span style={{ fontSize: 130, fontWeight: 700, letterSpacing: -2 }}>Әдебиет<span style={{ color: C.gold }}>Lab</span></span>
-        </div>
-        <div style={{ fontSize: 58, fontWeight: 600 }}><Words text="Сыныбыңызды бүгін ашыңыз!" delay={beat(1)} step={4} /></div>
-        <div style={{ transform: `scale(${0.6 + 0.4 * url}) translateY(${Math.sin(f / 10) * 3}px)`, opacity: url }}>
-          <span style={{ display: "inline-block", padding: "24px 54px", borderRadius: 999, background: C.gold, color: C.ink, fontSize: 54, fontWeight: 700, boxShadow: "0 16px 40px rgba(0,0,0,.25)" }}>adebietlab.vercel.app</span>
-        </div>
-      </AbsoluteFill>
-      <Burst x={960} y={790} start={beat(1) + 22} />
-      <Mascot size={260} style={{ position: "absolute", right: 140, bottom: 70 + Math.sin(f / 12) * 8, opacity: out, transform: `translateX(${(1 - useIn(beat(1))) * 500}px)` }} />
-      <div style={{ position: "absolute", top: 36, left: 0 }}><Ornament opacity={0.9} /></div>
-    </HeroBg>
-  );
-}
-
-// ---------- the film ----------
-
-// manual frames where a captured box is only a heading row
-const B = {
-  homeTop: { x: 800, y: 20, w: 620, h: 230 }, hero: { x: 300, y: 20, w: 1115, h: 250 },
-  olenLines: { x: 300, y: 95, w: 760, h: 395 }, kartaMap: { x: 300, y: 95, w: 640, h: 560 },
-  suhbatChat: { x: 300, y: 140, w: 780, h: 470 }, verse: { x: 620, y: 180, w: 800, h: 560 },
-  baigeTop: { x: 300, y: 155, w: 1115, h: 250 }, board: { x: 300, y: 440, w: 1115, h: 290 },
-  quizQ: { x: 300, y: 180, w: 1115, h: 330 }, tarihLine: { x: 300, y: 130, w: 1115, h: 560 },
-};
-
-const SCENES: Scene[] = [
-  { id: "01", extra: 50, Custom: Hook },
-  { id: "02", kicker: "Танысыңыз", title: "ӘдебиетLab — қазақ әдебиетінің веб-зертханасы", Custom: Devices },
-  { id: "03", kicker: "Кіру", title: "Бастау — бір минуттық іс", keys: [
-    { at: 0, shot: "t-classes", url: "/mugalim/synyptar" },
-    { at: 1, shot: "t-classes", url: "/mugalim/synyptar", look: "code", pop: "code", sfx: "pop" },
-    { at: 2, shot: "kiru-filled", url: "/kiru", look: { x: 300, y: 360, w: 620, h: 420 } },
-    { at: 2, d: 1.2, shot: "kiru-filled", url: "/kiru", look: { x: 300, y: 360, w: 620, h: 420 }, cursor: "go" },
-  ], badges: [{ at: 1, d: 0.8, num: 6, text: "таңбалы код" }, { at: 3, text: "🔒 Телефон да, пошта да керек емес" }] },
-  { id: "04", kicker: "Оқушыға", title: "Әр оқушының өз кабинеті", part: "Оқушыға", keys: [
-    { at: 0, shot: "home", url: "/oqushy" },
-    { at: 1, shot: "home", url: "/oqushy", look: B.homeTop },
-    { at: 2, shot: "achievements", url: "/oqushy/zhetistikter", look: B.hero },
-    { at: 3, shot: "home-plan", url: "/oqushy", look: "plan", fill: 0.9 },
-  ], badges: [{ at: 2, text: "Балапан → Қанаттанған → Қыран" }] },
-  { id: "05", kicker: "Кітапхана", title: "Шығарма мен сөздік", part: "Оқушыға", keys: [
-    { at: 0, shot: "works-search", url: "/oqushy/shygarmalar", look: { x: 300, y: 250, w: 1115, h: 600 } },
-    { at: 1, shot: "work", url: "/oqushy/shygarmalar/abai-qys", look: "about", cursor: "word" },
-    { at: 2, shot: "work-word", url: "/oqushy/shygarmalar/abai-qys", pop: "pop", sfx: "pop" },
-    { at: 3, shot: "work-word-added", url: "/oqushy/shygarmalar/abai-qys", pop: "pop", sfx: "ok" },
-  ], badges: [{ at: 0, d: 0.6, num: 36, text: "шығарма" }] },
-  { id: "06", kicker: "Өлең өлшегіш", title: "Буын мен ұйқас — бір басумен", part: "Оқушыға", keys: [
-    { at: 0, shot: "olen", url: "/oqushy/zertkhana/olen/abai-qys", cursor: "show" },
-    { at: 1, shot: "olen-syll", url: "/oqushy/zertkhana/olen/abai-qys", look: B.olenLines, sfx: "step" },
-    { at: 2, shot: "olen-ok", url: "/oqushy/zertkhana/olen/abai-qys", look: "quiz", sfx: "ok", burst: true },
-  ], mascot: 2, say: "Жарайсың!" },
-  { id: "07", kicker: "Талдау құралдары", title: "Байланыс, болжам, сюжет", part: "Оқушыға", keys: [
-    { at: 1, shot: "karta", url: "/oqushy/zertkhana/karta/kozy-korpesh", look: B.kartaMap },
-    { at: 2, shot: "egeri", url: "/oqushy/zertkhana/karta/kozy-korpesh", look: "card", fill: 0.9 },
-    { at: 3, shot: "zheli", url: "/oqushy/zertkhana/zheli/kozy-korpesh", look: "list" },
-  ], badges: [{ at: 1, d: 1.2, text: "Табылған байланыс: 4 / 6" }] },
-  { id: "08", kicker: "ЖИ-мен бірге", title: "Абаймен сөйлесіп көр", part: "Оқушыға", keys: [
-    { at: 0, shot: "suhbat", url: "/oqushy/suhbat", cursor: "q" },
-    { at: 1, shot: "suhbat-answer", url: "/oqushy/suhbat", look: B.suhbatChat, sfx: "send" },
-    { at: 2, shot: "chat-open", url: "/oqushy/shygarmalar/abai-qys", look: "panel", fill: 0.95 },
-    { at: 3, shot: "chat", url: "/oqushy/shygarmalar/abai-qys", look: "panel", pop: { x: 980, y: 12, w: 448, h: 300 }, sfx: "pop" },
-  ], badges: [{ at: 1, d: 0.6, num: 38, text: "кейіпкер" }], mascot: 2, say: "Өзің ойлап көр!" },
-  { id: "09", kicker: "Шығармашылық зертхана", title: "Өз нұсқаңды жаз", part: "Оқушыға", keys: [
-    { at: 1, shot: "creative-typed", url: "/oqushy/shygarmashylyq/kozy-korpesh", look: "text", fill: 0.9 },
-    { at: 2, shot: "creative-fb", url: "/oqushy/shygarmashylyq/kozy-korpesh", look: { x: 320, y: 530, w: 510, h: 215 }, pop: { x: 320, y: 530, w: 510, h: 215 }, sfx: "pop" },
-    { at: 3, shot: "creative-typed", url: "/oqushy/shygarmashylyq/kozy-korpesh", look: "text", cursor: "voice" },
-  ], badges: [{ at: 2, d: 0.4, text: "3 критерий · 0–2 балл" }, { at: 3, d: 0.4, text: "🎙 Дауыспен айту" }] },
-  { id: "10", kicker: "Жаттау мен бөлісу", title: "Жатта, жаса, бөліс", part: "Оқушыға", keys: [
-    { at: 0, shot: "zhattau-0", url: "/oqushy/zhattau", look: B.verse },
-    { at: 0, d: 0.5, shot: "zhattau-1", url: "/oqushy/zhattau", look: B.verse, sfx: "tick" },
-    { at: 0, d: 1.0, shot: "zhattau-2", url: "/oqushy/zhattau", look: B.verse, sfx: "tick" },
-    { at: 0, d: 1.5, shot: "zhattau-3", url: "/oqushy/zhattau", look: B.verse, sfx: "tick" },
-    { at: 0, d: 2.0, shot: "zhattau-4", url: "/oqushy/zhattau", look: B.verse, sfx: "tick" },
-    { at: 1, shot: "card-0", url: "/oqushy/kartochka", look: "canvas", fill: 0.92 },
-    { at: 1, d: 0.6, shot: "card-1", url: "/oqushy/kartochka", look: "canvas", fill: 0.92 },
-    { at: 1, d: 1.2, shot: "card-2", url: "/oqushy/kartochka", look: "canvas", fill: 0.92 },
-    { at: 2, shot: "card-3", url: "/oqushy/kartochka", cursor: "share" },
-  ], badges: [{ at: 0, d: 0.3, num: 5, text: "деңгей" }] },
-  { id: "11", kicker: "Әдебиет әлемі", title: "Карта мен тарих", part: "Оқушыға", keys: [
-    { at: 0, shot: "map", url: "/oqushy/adebi-karta", look: "map", fill: 0.95 },
-    { at: 2, shot: "tarih", url: "/oqushy/tarih", look: B.tarihLine },
-  ], badges: [{ at: 2, d: 0.5, num: 12, text: "дәуір" }] },
-  { id: "12", kicker: "Бәйге", title: "Оқу — қызықты жарыс", part: "Оқушыға", keys: [
-    { at: 0, shot: "quiz-pick", url: "/oqushy/baige/kozy-korpesh", look: B.quizQ, cursor: "pick" },
-    { at: 1, shot: "baige", url: "/oqushy/baige", look: B.baigeTop },
-    { at: 2, shot: "baige", url: "/oqushy/baige", look: B.board, sfx: "sparkle" },
-  ] },
-  { id: "13", kicker: "Мұғалімге", title: "Тапсырма — бірнеше минутта", part: "Мұғалімге", keys: [
-    { at: 0, shot: "t-create", url: "/mugalim/zhasau" },
-    { at: 1, shot: "t-create", url: "/mugalim/zhasau", look: "material", fill: 0.75 },
-    { at: 2, shot: "t-create-methods", url: "/mugalim/zhasau", look: { x: 940, y: 200, w: 480, h: 560 }, cursor: "go" },
-    { at: 3, shot: "t-new-set", url: "/mugalim/bank", look: { x: 300, y: 60, w: 1115, h: 560 }, cursor: "approve" },
-    { at: 4, shot: "t-assign", url: "/mugalim/bank", look: "form", pop: "form", sfx: "pop" },
-  ], badges: [{ at: 2, d: 0.6, text: "Блум · Венн · Синквейн · Тест" }, { at: 2, d: 1.3, text: "A · B · C деңгей" }] },
-  { id: "14", kicker: "Нәтиже", title: "Сынып қайда қиналды?", part: "Мұғалімге", keys: [
-    { at: 1, shot: "t-results", url: "/mugalim/natizheler", look: "table", sfx: "ok" },
-    { at: 2, shot: "t-grade", url: "/mugalim/natizheler", look: { x: 300, y: 555, w: 1115, h: 345 } },
-    { at: 3, shot: "t-analytics", url: "/mugalim/analitika", look: { x: 300, y: 270, w: 1115, h: 330 } },
-  ], badges: [{ at: 1, d: 0.6, text: "Excel-ге (CSV)" }] },
-  { id: "15", Custom: Trust },
-  { id: "16", extra: 60, Custom: Outro },
-];
-
-const lengths = SCENES.map(lengthOf);
-export const promoLength = () => lengths.reduce((a, b) => a + b, 0) - T * (SCENES.length - 1);
-const starts = lengths.map((_, i) => lengths.slice(0, i).reduce((a, b) => a + b, 0) - T * i);
-
-/** Every sound with its frame: the voice, a whoosh on each cut, the clicks and pops of the scenes. */
+// ---------- sound ----------
 function sounds() {
-  const list: { from: number; src: string; vol: number }[] = [];
+  const list: { from: number; src: string; vol: number; len?: number }[] = [];
   SCENES.forEach((s, i) => {
-    const beat = frameAt(s.id);
-    if (VO[s.id]) list.push({ from: starts[i] + LEAD, src: `vo/vo-${s.id}.mp3`, vol: 1 });
-    if (i > 0) list.push({ from: starts[i] - 6, src: "sfx/whoosh.wav", vol: 0.35 });
-    for (const k of s.keys ?? []) {
-      const at = starts[i] + beat(k.at, k.d);
-      if (k.sfx) list.push({ from: at + (k.pop ? 10 : 0), src: `sfx/${k.sfx}.wav`, vol: 0.5 });
-      if (k.cursor) list.push({ from: at + 22, src: "sfx/tap.wav", vol: 0.6 });
+    const at = STARTS[i];
+    if (VO[s.id]) list.push({ from: at + LEAD, src: `vo/vo-${s.id}.mp3`, vol: 1 });
+    if (i > 0) list.push({ from: at - 4, src: "sfx/whoosh.wav", vol: 0.4 });
+    const ev = EVENTS[s.id];
+    if (ev) {
+      for (const c of ev.clicks) list.push({ from: at + c.f, src: "sfx/click.wav", vol: 0.7 });
+      for (const k of ev.typing) list.push({ from: at + k.f, src: "sfx/typing.wav", vol: 0.32, len: k.len });
     }
-    for (const b of s.badges ?? []) list.push({ from: starts[i] + beat(b.at, b.d), src: "sfx/pop.wav", vol: 0.3 });
+    if (s.kind === "screen") list.push({ from: at + 2, src: "sfx/whoosh-soft.wav", vol: 0.35 });
+    for (const n of s.notes ?? []) list.push({ from: at + frameAt(s.id)(n.beat, n.d) + 8, src: "sfx/pop.wav", vol: 0.4 });
+    if (s.react) list.push({ from: at + frameAt(s.id)(s.react.beat, s.react.d), src: "sfx/boing.wav", vol: 0.5 });
   });
-  list.push({ from: starts[0] + frameAt("01")(2), src: "sfx/sparkle.wav", vol: 0.5 });
-  list.push({ from: starts[15] + frameAt("16")(1) + 22, src: "sfx/sparkle.wav", vol: 0.5 });
+  const h = frameAt("01");
+  list.push({ from: STARTS[0] + h(1), src: "sfx/hit.wav", vol: 0.8 });
+  list.push({ from: STARTS[0] + h(2) + 22, src: "sfx/sparkle.wav", vol: 0.5 });
+  const o = frameAt("16"), oi = SCENES.length - 1;
+  list.push({ from: STARTS[oi] + o(2) + 20, src: "sfx/sparkle.wav", vol: 0.5 });
+  const t = frameAt("15"), ti = SCENES.findIndex((s) => s.id === "15");
+  for (const at of [LEAD + 18, t(1) + 14, t(2) + 14]) list.push({ from: STARTS[ti] + at, src: "sfx/ok.wav", vol: 0.35 });
+  const ii = SCENES.findIndex((s) => s.id === "02"), b = frameAt("02");
+  list.push({ from: STARTS[ii] + b(3), src: "sfx/pop.wav", vol: 0.5 });
   return list;
 }
 const SOUNDS = sounds();
-const voice = SOUNDS.filter((x) => x.src.startsWith("vo/")).map((x) => ({ from: x.from, to: x.from + VO[x.src.slice(6, 8)].dur * FPS }));
+const VOICE = SCENES.map((s, i) => (VO[s.id] ? { from: STARTS[i] + LEAD, to: STARTS[i] + LEAD + VO[s.id].dur * FPS } : null)).filter(Boolean) as { from: number; to: number }[];
 
-/** Music under the voice, a little up in the gaps. */
-function music(fr: number, total: number) {
-  const near = Math.min(...voice.map((p) => (fr < p.from ? p.from - fr : fr > p.to ? fr - p.to : 0)));
-  const bed = interpolate(near, [4, 20], [0.16, 0.38], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  return bed * interpolate(fr, [0, 20, total - 60, total], [0, 1, 1, 0], { extrapolateRight: "clamp" });
+/** Music under the voice, up in the gaps. */
+function music(fr: number) {
+  const near = Math.min(...VOICE.map((p) => (fr < p.from ? p.from - fr : fr > p.to ? fr - p.to : 0)));
+  const bed = interpolate(near, [3, 16], [0.13, 0.34], clamp);
+  return bed * interpolate(fr, [0, 10, TOTAL - 30, TOTAL], [0, 1, 1, 0], clamp);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const transitions: TransitionPresentation<any>[] = [slide({ direction: "from-right" }), wipe({ direction: "from-left" }), slide({ direction: "from-bottom" }), fade()];
+export const promoLength = () => TOTAL;
 
 export function Promo() {
   useFonts();
-  const total = promoLength();
   return (
-    <AbsoluteFill style={{ background: C.navyDeep }}>
+    <AbsoluteFill style={{ background: NAVY }}>
       <TransitionSeries>
         {SCENES.flatMap((s, i) => {
-          const seq = (
-            <TransitionSeries.Sequence key={s.id} durationInFrames={lengths[i]}>
-              {s.keys || s.title ? <ScreenScene s={s} len={lengths[i]} /> : s.Custom && <s.Custom len={lengths[i]} beat={frameAt(s.id)} />}
-            </TransitionSeries.Sequence>
-          );
-          if (i === 0) return [seq];
-          const tr = ["02", "15", "16"].includes(s.id) ? transitions[3] : transitions[i % transitions.length];
-          return [<TransitionSeries.Transition key={`t${s.id}`} presentation={tr} timing={linearTiming({ durationInFrames: T })} />, seq];
+          const len = LENGTHS[i];
+          const body = s.kind === "hook" ? <Hook len={len} /> : s.kind === "intro" ? <Intro /> : s.kind === "trust" ? <Trust /> : s.kind === "outro" ? <Outro len={len} /> : <ScreenScene s={s} len={len} />;
+          const seq = <TransitionSeries.Sequence key={s.id} durationInFrames={len}>{body}</TransitionSeries.Sequence>;
+          return i === 0 ? [seq] : [<TransitionSeries.Transition key={`t${s.id}`} presentation={bands()} timing={linearTiming({ durationInFrames: T })} />, seq];
         })}
       </TransitionSeries>
-      <Audio src={staticFile("music.wav")} volume={(fr) => music(fr, total)} />
+      <Audio src={staticFile("music.wav")} volume={music} />
       {SOUNDS.map((x, i) => (
-        <Sequence key={i} from={Math.max(0, x.from)}>
+        <Sequence key={i} from={Math.max(0, x.from)} durationInFrames={x.len}>
           <Audio src={staticFile(x.src)} volume={x.vol} />
         </Sequence>
       ))}
-      <Progress total={total} />
+      <Progress />
     </AbsoluteFill>
   );
 }
 
-function Progress({ total }: { total: number }) {
+function Progress() {
   const f = useCurrentFrame();
-  return <div style={{ position: "absolute", left: 0, bottom: 0, height: 6, width: `${(f / total) * 100}%`, background: C.gold }} />;
+  return <div style={{ position: "absolute", left: 0, bottom: 0, height: 6, width: `${(f / TOTAL) * 100}%`, background: `linear-gradient(90deg, ${C.gold}, #ffd866)` }} />;
 }
+

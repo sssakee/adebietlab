@@ -51,7 +51,40 @@ function whoosh(len = 0.55, lo = 300, hi = 2400, vol = 0.5) {
   return x.map((v) => (v / peak) * vol);
 }
 
+/** A mouse click: two short filtered ticks (press, release). */
+function click() {
+  const x = new Float32Array(Math.round(0.09 * SR));
+  for (const [at, f, v] of [[0, 3200, 0.55], [0.055, 4200, 0.3]] as const) {
+    let prev = 0;
+    for (let i = 0; i < 0.012 * SR; i++) { const n = noise(); x[Math.round(at * SR) + i] += (n - prev * 0.7) * v * Math.exp(-i / SR * 600) + Math.sin((2 * Math.PI * f * i) / SR) * v * 0.3 * Math.exp(-i / SR * 900); prev = n; }
+  }
+  return x;
+}
+/** Six seconds of light typing: keys at a human, uneven pace, the odd space bar. */
+function typing() {
+  const x = new Float32Array(6 * SR);
+  let t = 0.01;
+  while (t < 5.9) {
+    const space = ((noise() + 1) / 2) < 0.15, v = (space ? 0.35 : 0.22) * (0.7 + ((noise() + 1) / 2) * 0.6);
+    let prev = 0;
+    for (let i = 0; i < (space ? 0.03 : 0.018) * SR; i++) { const n = noise(); x[Math.round(t * SR) + i] += (n - prev * (space ? 0.3 : 0.8)) * v * Math.exp(-i / SR * (space ? 160 : 320)); prev = n; }
+    t += 0.055 + ((noise() + 1) / 2) * 0.06;
+  }
+  return x;
+}
+/** The hit on «Жоқ!»: a low thump with a bright crack on top. */
+function hit() {
+  const x = new Float32Array(Math.round(0.9 * SR));
+  let ph = 0;
+  for (let i = 0; i < x.length; i++) { const t = i / SR; ph += (2 * Math.PI * (45 + 120 * Math.exp(-t * 25))) / SR; x[i] = Math.sin(ph) * Math.exp(-t * 5) * 0.8 + noise() * Math.exp(-t * 30) * 0.35; }
+  return x;
+}
+
 mkdirSync(new URL("../public/sfx/", import.meta.url), { recursive: true });
+wav("click", click());
+wav("typing", typing());
+wav("hit", hit());
+wav("boing", tones([{ f: 220, to: 660, len: 0.12, vol: 0.3, wave: "triangle" }, { f: 660, to: 520, at: 0.1, len: 0.16, vol: 0.2, wave: "triangle" }]));
 wav("tap", tones([{ f: 620, to: 420, len: 0.07, vol: 0.3 }]));
 wav("pick", tones([{ f: 880, len: 0.06, vol: 0.3, wave: "triangle" }, { f: 1175, at: 0.05, len: 0.08, vol: 0.25, wave: "triangle" }]));
 wav("send", tones([{ f: 420, to: 840, len: 0.14, vol: 0.3 }]));
