@@ -20,7 +20,7 @@ const TOUR: TourStep[] = [
   { target: nav("/mugalim/bank"), title: "Тапсырмалар банкі", text: "Бекітілген жинақтар осында. Оларды сыныпқа мерзімімен бересіз." },
   { target: nav("/mugalim/natizheler"), title: "Нәтижелер", text: "Кім қай тапсырмада қиналғанын кестеден көресіз, ашық жауаптарды бағалайсыз." },
   { target: nav("/mugalim/analitika"), title: "Аналитика", text: "Қай шығарма мен дағды қиын, кім артта қалып жатқаны себебімен көрінеді." },
-  { target: "[data-tour=sound]", title: "Дыбыс", text: "Дыбысты осы батырмамен қосасыз. Нұсқаулықты «?» батырмасымен қайта ашасыз." },
+  { target: "[data-tour=sound]", title: "Дыбыс пен әуен", text: "Батырма дыбысын осы батырмамен қосасыз. Жанындағы «Әуен» фондық домбыра әуенін өшіреді не қосады. Нұсқаулықты «?» батырмасымен қайта ашасыз." },
 ];
 
 export default async function TeacherLayout({ children }: LayoutProps<"/mugalim">) {

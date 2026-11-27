@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useState, useSyncExternalStore } from "react";
 import { Mic, Square } from "lucide-react";
+import { duckMusic } from "./Music";
 
 // Web Speech API: Chrome and Edge send the audio to their speech service, Safari recognises on the
 // device. Kazakh (kk-KZ) depends on the browser; where the API is missing the button is not shown.
@@ -57,12 +58,16 @@ export function MicButton({ target }: { target: string }) {
       for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) append(e.results[i][0].transcript);
     };
     r.onerror = (e) => e.error !== "aborted" && setError(ERROR[e.error] ?? "Дауысты тану істемеді. Жазып жібер.");
-    r.onend = () => setOn(false);
+    r.onend = () => {
+      setOn(false);
+      duckMusic(false);
+    };
     setError("");
     rec.current = r;
     try {
       r.start();
       setOn(true);
+      duckMusic(true);
     } catch {
       setError("Дауысты тану басталмады. Қайта көр.");
     }

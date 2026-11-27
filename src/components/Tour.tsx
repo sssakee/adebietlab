@@ -154,6 +154,7 @@ export function Tour({ storageKey, steps }: { storageKey: string; steps: TourSte
 export function TourButton({ storageKey }: { storageKey: string }) {
   return (
     <button
+      title="Нұсқаулық"
       type="button"
       onClick={() => mark(storageKey, false)}
       className="flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-2xl px-3 text-sm font-bold text-muted hover:bg-soft hover:text-ink lg:justify-start"

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getUser } from "@/lib/auth";
 import { Logo } from "@/components/Logo";
+import { MusicToggle } from "@/components/Music";
 import { Mascot } from "@/components/Mascot";
 import { Ornament } from "@/components/Ornament";
 import { StudentForm, TeacherForm } from "./Forms";
@@ -18,7 +19,10 @@ export default async function LoginPage() {
   if (u) redirect(u.role === "teacher" ? "/mugalim" : "/oqushy");
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6 p-4 sm:p-8">
-      <Logo />
+      <div className="flex items-center justify-between gap-3">
+        <Logo />
+        <MusicToggle />
+      </div>
       <section className="relative overflow-hidden rounded-[32px] hero-bg px-6 pb-14 pt-9 sm:px-10 sm:pb-20 sm:pt-14">
         <Blobs big />
         <div className="relative z-10 max-w-xl">

@@ -70,6 +70,7 @@ export function SoundToggle() {
     <button
       type="button"
       data-tour="sound"
+      title={on ? "Дыбыс қосулы" : "Дыбыс өшірулі"}
       aria-pressed={on}
       onClick={() => {
         localStorage.setItem(KEY, on ? "off" : "on");

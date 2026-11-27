@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { SITE_URL } from "@/lib/site";
 import { SoundEffects } from "@/components/SoundEffects";
+import { BackgroundMusic } from "@/components/Music";
 
 const description = "5–11 сынып оқушылары мен қазақ әдебиеті мұғалімдеріне арналған зертхана: өлең өлшегіш, кейіпкер картасы, оқиға желісі және ЖИ көмекшісі.";
 
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-dvh">
         {children}
         <SoundEffects />
+        <BackgroundMusic />
       </body>
     </html>
   );

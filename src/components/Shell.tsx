@@ -4,6 +4,7 @@ import { Logo } from "./Logo";
 import { NavLink } from "./NavLink";
 import { PageTransition } from "./PageTransition";
 import { SoundToggle } from "./Sfx";
+import { MusicToggle } from "./Music";
 import { Tour, TourButton, type TourStep } from "./Tour";
 
 export type NavItem = { href: string; label: string; short?: string; icon: React.ReactNode; exact?: boolean };
@@ -49,8 +50,12 @@ export function Shell({
         </nav>
         <div className="flex items-center gap-1 lg:mt-auto lg:flex-col lg:items-stretch lg:gap-3">
           {aside && <div className="hidden lg:block">{aside}</div>}
-          <TourButton storageKey={tour.key} />
-          <SoundToggle />
+          {/* Help, sounds and music: one row of icons (names in tooltips) so the sidebar fits a laptop screen. */}
+          <div className="flex items-center gap-1 lg:justify-around [&_span]:sr-only">
+            <TourButton storageKey={tour.key} />
+            <SoundToggle />
+            <MusicToggle />
+          </div>
           <div className="flex items-center gap-3 rounded-2xl lg:bg-soft lg:p-3">
             <span className="hidden size-10 shrink-0 place-items-center rounded-full bg-primary font-bold text-on-color lg:grid" aria-hidden="true">
               {user.name[0]}
