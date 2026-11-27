@@ -5,7 +5,12 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Teacher material uploads (TXT/DOCX) up to 10 MB.
-  experimental: { serverActions: { bodySizeLimit: "11mb" } },
+  experimental: {
+    serverActions: { bodySizeLimit: "11mb" },
+    // Client cache: a page seen in the last 30 s, or a menu page prefetched in the last minute,
+    // opens without a server round trip. Every server action that changes data purges it.
+    staleTimes: { dynamic: 30, static: 60 },
+  },
   // Fonts and the mascot never change under the same name: let browsers keep them for a year.
   async headers() {
     const cache = [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }];

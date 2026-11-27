@@ -44,6 +44,7 @@ create table works (
   summary text not null default '',
   text text,                       -- only public-domain texts from a checked source
   text_source text,
+  read_url text,                   -- where to read the full text: a library page, the text is linked, not copied
   is_public_domain boolean not null default false,
   lab jsonb not null default '{}'  -- data for lab tools (poem lines, characters, reference map, «Егер...» question)
 );

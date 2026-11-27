@@ -104,7 +104,7 @@ export function PoemLab({ slug, lines }: { slug: string; lines: string[] }) {
           <p className="text-sm text-muted">Жауап дайын ережелермен тексеріледі.</p>
           <button
             type="button"
-            className="btn-primary h-14 px-10"
+            className="btn-primary h-14 px-8"
             disabled={!meter || !rhyme || pending}
             onClick={() => start(async () => setResult(await checkOlen(slug, meter, rhyme)))}
           >

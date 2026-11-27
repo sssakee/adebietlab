@@ -81,7 +81,7 @@ export function Timeline({ slug, events, startOrder, startElements }: { slug: st
         </ol>
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted">{done ? "Жауап эталонмен ережемен салыстырылады." : "Барлық оқиғаға элемент таңда."}</p>
-          <button type="button" className="btn-primary h-14 px-10" disabled={!done || pending} onClick={() => start(async () => setResult(await checkZheli(slug, order, els)))}>
+          <button type="button" className="btn-primary h-14 px-8" disabled={!done || pending} onClick={() => start(async () => setResult(await checkZheli(slug, order, els)))}>
             Тексеру
           </button>
         </div>

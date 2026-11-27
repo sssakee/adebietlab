@@ -22,6 +22,7 @@ export type Work = {
   summary: string;
   text: string | null;
   text_source: string | null;
+  read_url: string | null;
   is_public_domain: boolean;
   lab: WorkLab;
 };

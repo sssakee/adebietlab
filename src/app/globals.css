@@ -151,7 +151,7 @@
   box-shadow: inset 0 -4px 0 rgb(0 0 0 / 0.18);
 }
 @utility btn {
-  @apply relative inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl px-6 font-bold select-none disabled:cursor-not-allowed disabled:opacity-50;
+  @apply relative inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl px-6 font-bold select-none disabled:cursor-not-allowed disabled:opacity-50;
   --edge: transparent;
   box-shadow: 0 4px 0 var(--edge);
   &:active:not(:disabled) {
@@ -206,6 +206,10 @@
   &:has(input:checked) {
     @apply border-primary-edge bg-primary text-on-color;
     box-shadow: 0 3px 0 var(--color-primary-edge);
+    /* secondary text inside a chosen card stays readable on the blue */
+    & .text-muted {
+      color: rgb(255 255 255 / 0.85);
+    }
   }
   &:has(input:focus-visible) {
     outline: 3px solid var(--color-primary);

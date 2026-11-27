@@ -24,7 +24,7 @@ export function NewMethodForm() {
         <p role="status" aria-live="polite" className={`text-sm font-bold ${state?.error ? "text-red-ink" : "text-green-ink"}`}>
           {state?.error || (state?.ok && "✓ Әдіс қосылды. Ол жоғарыдағы тізімде тұр.")}
         </p>
-        <button className="btn-primary md:justify-self-end" disabled={pending}>Әдісті сақтау</button>
+        <button className="btn-primary h-14 px-8 md:justify-self-end" disabled={pending}>Әдісті сақтау</button>
       </form>
     </details>
   );

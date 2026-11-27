@@ -69,7 +69,7 @@ export default async function SetPage({ params }: PageProps<"/mugalim/bank/[id]"
       {draft ? (
         <form action={approveSet.bind(null, id)} className="card flex flex-wrap items-center justify-between gap-4">
           <p className="text-muted">Барлық тапсырманы тексердіңіз бе? Бекіткеннен кейін жинақты сыныпқа беруге болады.</p>
-          <Submit className="btn-primary h-14 px-10" disabled={!tasks.length}>Бекіту</Submit>
+          <Submit className="btn-primary h-14 px-8" disabled={!tasks.length}>Бекіту</Submit>
         </form>
       ) : (
         <form action={assignSet.bind(null, id)} className="card grid items-end gap-4 md:grid-cols-4">
@@ -92,7 +92,7 @@ export default async function SetPage({ params }: PageProps<"/mugalim/bank/[id]"
               <option value="full">ЖИ рұқсат етілген</option>
             </select>
           </div>
-          <Submit className="btn-primary h-12" disabled={!classes.length}>Сыныпқа жіберу</Submit>
+          <Submit className="btn-primary h-14 px-8" disabled={!classes.length}>Сыныпқа жіберу</Submit>
         </form>
       )}
     </div>

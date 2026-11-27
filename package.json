@@ -11,8 +11,10 @@
     "test": "vitest run",
     "db:setup": "tsx --env-file-if-exists=.env.local scripts/seed.ts",
     "ai:eval": "tsx --conditions=react-server --env-file-if-exists=.env.local scripts/ai-eval.ts",
+    "ai:works": "tsx --conditions=react-server --env-file-if-exists=.env.local scripts/works-eval.ts",
     "smoke": "node scripts/smoke.mjs",
-    "db:sql": "sh scripts/supabase-sql.sh"
+    "db:sql": "sh scripts/supabase-sql.sh",
+    "db:works": "tsx scripts/works-sql.ts"
   },
   "dependencies": {
     "lucide-react": "^1.81.0",

@@ -1,7 +1,16 @@
-# Runs the 12 AI test cases against the real model and commits docs/ai-eval-results.md.
+# Runs an AI test suite against the real model and commits its results to docs/:
+# ai-eval — the 12 AI test cases (docs/ai-eval-results.md);
+# works — a task set from every library work with a source link (docs/works-eval-results.md).
 # The key lives only in GitHub: Settings → Secrets and variables → Actions → AI_API_KEY.
 name: ЖИ тесті
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Қай тест
+        type: choice
+        options: [ai-eval, works]
+        default: ai-eval
 permissions:
   contents: write
 jobs:
@@ -15,8 +24,9 @@ jobs:
         run: test -n "$KEY" || { echo "AI_API_KEY құпиясы қойылмаған"; exit 1; }
         env: { KEY: "${{ secrets.AI_API_KEY }}" }
       - run: npm ci
-      - run: npm run ai:eval
+      - run: npm run "$SCRIPT"
         env:
+          SCRIPT: ${{ inputs.suite == 'works' && 'ai:works' || 'ai:eval' }}
           AI_PROVIDER: gemini
           # Flash has only 20 free requests a day and timed out under load; Flash-Lite is faster with its own quota.
           AI_MODEL: gemini-flash-lite-latest
@@ -25,6 +35,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/ai-eval-results.md
+          git add docs/ai-eval-results.md docs/works-eval-results.md
           git diff --cached --quiet || git commit -m "ЖИ тест нәтижелері (шын модель)"
           git push

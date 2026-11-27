@@ -6,6 +6,7 @@ import type { Character } from "@/lib/queries";
 import { createLabAssignment, gradeEgerde } from "./actions";
 import { ClassPicker } from "./ClassPicker";
 import { Submit } from "@/components/Submit";
+import { PageHead } from "@/components/PageHead";
 
 export const metadata = { title: "Шолу" };
 
@@ -65,9 +66,6 @@ export default async function TeacherHome({ searchParams }: PageProps<"/mugalim"
     order by (l.teacher_scores is null) desc, l.updated_at desc`,
   ]);
 
-
-
-
   // "Where the class struggles": wrong rhyme answers, missing map links, most-missed tasks.
 
   const charName = new Map<string, string>();
@@ -83,18 +81,12 @@ export default async function TeacherHome({ searchParams }: PageProps<"/mugalim"
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-sm font-bold text-muted">
-            {cls.name} сынып · Сынып коды: <span className="num tracking-wider text-primary">{cls.join_code}</span>
-          </p>
-          <h1 className="mt-1 text-3xl font-bold">Сынып зертханасы</h1>
-        </div>
+      <PageHead title="Сынып зертханасы" sub={`${cls.name} сынып · сынып коды: ${cls.join_code}`}>
         <div className="flex flex-wrap items-center gap-3">
           <ClassPicker list={list} current={cls.id} />
-          <span className="tag bg-green-soft px-4 py-2 text-sm text-green-ink">Зертхана құралдары ЖИ-сіз жұмыс істейді</span>
+          <span className="tag bg-white/15 px-4 py-2 text-sm text-white">Зертхана құралдары ЖИ-сіз жұмыс істейді</span>
         </div>
-      </header>
+      </PageHead>
 
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         <Stat label="Жұмысқа қатысты" value={`${stats.active}`} sub={`/ ${cls.students}`} />
@@ -143,7 +135,7 @@ export default async function TeacherHome({ searchParams }: PageProps<"/mugalim"
                 <input id="due" name="due_at" type="date" className="field" />
               </div>
             </div>
-            <Submit className="btn-primary h-12">Сыныпқа жіберу</Submit>
+            <Submit className="btn-primary h-14 px-8">Сыныпқа жіберу</Submit>
           </form>
         </section>
 
@@ -200,7 +192,7 @@ export default async function TeacherHome({ searchParams }: PageProps<"/mugalim"
               {sp.graded && <p role="status" className="rounded-2xl bg-green-soft p-3 text-sm font-bold text-green-ink">✓ Баға сақталды, оқушы оны өз бетінде көреді.</p>}
               <div className="flex items-center justify-between gap-3">
                 <p className="num text-lg font-bold">{g.teacher_scores ? `Жиыны: ${g.teacher_scores.reduce((a, b) => a + b, 0)} / 6` : "Жиыны: — / 6"}</p>
-                <Submit className="btn-primary">Бағаны сақтау</Submit>
+                <Submit className="btn-primary h-14 px-8">Бағаны сақтау</Submit>
               </div>
             </form>
           </div>

@@ -42,10 +42,9 @@ export default async function StudentLayout({ children }: LayoutProps<"/oqushy">
     </div>
   );
   return (
-    <Shell tour={{ key: "al_tour_student", steps: TOUR }} nav={NAV} aside={aside} user={{ name: u.full_name, note: `${u.class_name ?? ""} · ${levelFor(u.points).name} зерттеуші` }}>
+    <Shell tour={{ key: "al_tour_student", steps: TOUR }} nav={NAV} aside={aside} floating={<ChatWidget />} user={{ name: u.full_name, note: `${u.class_name ?? ""} · ${levelFor(u.points).name} зерттеуші` }}>
       {/* room below content so the floating chat button never covers the last button */}
       <div className="lg:pb-24">{children}</div>
-      <ChatWidget />
     </Shell>
   );
 }

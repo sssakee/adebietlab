@@ -15,6 +15,7 @@ export function Shell({
   aside,
   user,
   tour,
+  floating,
   children,
 }: {
   nav: NavItem[];
@@ -22,6 +23,8 @@ export function Shell({
   aside?: React.ReactNode;
   user: { name: string; note: string };
   tour: { key: string; steps: TourStep[] };
+  /** Fixed-position extras (the chat). Outside the page wrapper: its entry animation would pin them to the page instead of the screen. */
+  floating?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -67,6 +70,7 @@ export function Shell({
       <main id="main" className="min-w-0 flex-1 pb-24 lg:pb-0">
         <PageTransition>{children}</PageTransition>
       </main>
+      {floating}
       <Tour storageKey={tour.key} steps={tour.steps} />
       <nav aria-label="Негізгі мәзір" className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden">
         <div className="mx-auto grid max-w-lg grid-cols-5">

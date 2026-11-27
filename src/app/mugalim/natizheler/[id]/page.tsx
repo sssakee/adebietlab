@@ -89,7 +89,7 @@ export default async function Grade({ params, searchParams }: PageProps<"/mugali
           <label htmlFor="fb" className="label">Оқушыға пікір</label>
           <textarea id="fb" name="feedback" rows={3} maxLength={1000} defaultValue={s.feedback || (open.map((t) => s.ai_suggestions[t.id]?.feedback).filter(Boolean).join(" "))} className="field" />
           <div className="mt-4 flex justify-end">
-            <Submit className="btn-primary h-12 px-8">Бағаны сақтау</Submit>
+            <Submit className="btn-primary h-14 px-8">Бағаны сақтау</Submit>
           </div>
         </section>
       </form>

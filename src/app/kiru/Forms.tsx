@@ -31,7 +31,7 @@ export function StudentForm() {
       <Field label="PIN (4 цифр)" name="pin" inputMode="numeric" pattern="\d{4}" maxLength={4} type="password" autoComplete="off" />
       <p className="text-sm text-muted">Бірінші рет кірсең, PIN-ді өзің ойлап тап және есте сақта. Телефон, мекенжай сұралмайды.</p>
       <FormError state={state} />
-      <button className="btn-gold" disabled={pending}>
+      <button className="btn-gold h-14" disabled={pending}>
         {pending ? "Күте тұр…" : "Зертханаға кіру"}
       </button>
     </form>
@@ -58,7 +58,7 @@ export function TeacherForm() {
         <Field state={isLogin ? loginState : regState} label="Электрондық пошта" name="email" type="email" autoComplete="email" />
         <Field label="Құпиясөз" name="password" type="password" autoComplete={isLogin ? "current-password" : "new-password"} minLength={isLogin ? undefined : 8} />
         <FormError state={isLogin ? loginState : regState} />
-        <button className="btn-primary" disabled={p1 || p2}>
+        <button className="btn-primary h-14" disabled={p1 || p2}>
           {isLogin ? "Кіру" : "Тіркелу"}
         </button>
       </form>

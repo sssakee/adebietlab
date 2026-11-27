@@ -14,12 +14,17 @@ export const metadata = { title: "Басты бет" };
 
 export default async function StudentHome() {
   const u = await requireRole("student");
-  const [found, days, today, list] = await Promise.all([discoveries(u.id), streak(u.id), todayCount(u.id), studentAssignments(u.id, u.class_id)]);
+  const [found, days, today, list, [map]] = await Promise.all([
+    discoveries(u.id),
+    streak(u.id),
+    todayCount(u.id),
+    studentAssignments(u.id, u.class_id),
+    sql<{ title: string; slug: string; found: number; total: number }[]>`
+      select w.title, w.slug, (l.result->>'found')::int as found, (l.result->>'total')::int as total
+      from lab_works l join works w on w.id = l.work_id
+      where l.student_id = ${u.id} and l.kind = 'char_map' order by l.updated_at desc limit 1`,
+  ]);
   const lvl = levelFor(u.points);
-  const [map] = await sql<{ title: string; slug: string; found: number; total: number }[]>`
-    select w.title, w.slug, (l.result->>'found')::int as found, (l.result->>'total')::int as total
-    from lab_works l join works w on w.id = l.work_id
-    where l.student_id = ${u.id} and l.kind = 'char_map' order by l.updated_at desc limit 1`;
   const next = list.find((a) => a.status === "new");
 
   return (
@@ -45,7 +50,7 @@ export default async function StudentHome() {
 
         <section className="relative min-h-80 overflow-hidden rounded-[32px] hero-bg px-6 pb-14 pt-8 text-white sm:px-11 sm:pt-10" aria-labelledby="hello">
           <div className="absolute -bottom-24 right-[-10%] h-56 w-[70%] rounded-[50%] bg-navy-deep" aria-hidden="true" />
-          <div className="absolute right-[34%] top-14 hidden size-20 rounded-full bg-gold shadow-[0_6px_0_var(--color-gold-edge)] sm:block" aria-hidden="true" />
+          <div className="absolute right-8 top-8 hidden size-24 rounded-full bg-gold lg:right-24 shadow-[0_6px_0_var(--color-gold-edge)] sm:block" aria-hidden="true" />
           <div className="relative z-10 max-w-md">
             <span className="tag bg-white/15 text-white">{u.grade ? `${u.grade}-сынып · ` : ""}Әдебиет</span>
             <h1 id="hello" className="mt-4 text-4xl font-bold sm:text-5xl">

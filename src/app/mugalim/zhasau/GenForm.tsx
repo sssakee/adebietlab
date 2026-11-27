@@ -68,7 +68,7 @@ export function GenForm({ methods, works }: { methods: { id: string; name: strin
           </div>
         </div>
         <p role="alert" aria-live="polite" className="text-sm font-bold text-red-ink">{state?.error}</p>
-        <button className="btn-primary h-14" disabled={pending}>
+        <button className="btn-primary h-14 px-8" disabled={pending}>
           {pending ? "ЖИ тапсырма жасап жатыр…" : "Тапсырма жасау"}
         </button>
       </section>

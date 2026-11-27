@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, AudioLines, GitBranch, Info, TrendingUp, Waypoints } from "lucide-react";
+import { ArrowLeft, ExternalLink, Info } from "lucide-react";
 import { requireRole } from "@/lib/auth";
-import { getWork, toolHref } from "@/lib/queries";
+import { getWork } from "@/lib/queries";
+import { ToolLinks } from "@/components/ToolLinks";
 import { SplitText } from "@/components/SplitText";
 
 export async function generateMetadata({ params }: PageProps<"/oqushy/shygarmalar/[slug]">) {
@@ -14,12 +15,7 @@ export default async function WorkPage({ params }: PageProps<"/oqushy/shygarmala
   await requireRole("student");
   const w = await getWork((await params).slug);
   if (!w) notFound();
-  const tools = [
-    w.lab.poem && { tool: "olen", label: "Өлең өлшегіш", icon: AudioLines, color: "bg-primary" },
-    w.lab.characters && { tool: "char_map", label: "Кейіпкер картасы", icon: Waypoints, color: "bg-violet" },
-    w.lab.egerde && { tool: "egerde", label: "«Егер...» тәжірибесі", icon: GitBranch, color: "bg-red" },
-    w.lab.timeline && { tool: "zheli", label: "Оқиға желісі", icon: TrendingUp, color: "bg-green-ink" },
-  ].filter(Boolean) as { tool: string; label: string; icon: typeof Info; color: string }[];
+  const tools = (["olen", "char_map", "egerde", "zheli"] as const).filter((t) => ({ olen: w.lab.poem, char_map: w.lab.characters, egerde: w.lab.egerde, zheli: w.lab.timeline })[t]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -59,9 +55,15 @@ export default async function WorkPage({ params }: PageProps<"/oqushy/shygarmala
               <p className="flex gap-2 rounded-2xl bg-soft p-4 text-muted">
                 <Info className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
                 {w.is_public_domain
-                  ? "Мәтін әлі қосылмаған. Оны мұғалім сенімді басылымнан қосады."
+                  ? "Мәтін бұл жерге көшірілмейді: оны сенімді кітапханадан оқисың, ал мұғалім сабаққа үзінді қоса алады."
                   : "Шығарма авторлық құқықпен қорғалған, сондықтан толық мәтін берілмейді. Мұғалім сабаққа үзінді жүктей алады."}
               </p>
+            )}
+            {w.read_url && (
+              <a href={w.read_url} target="_blank" rel="noopener noreferrer" className="btn-ghost mt-4">
+                Толық мәтін: {new URL(w.read_url).hostname} <ExternalLink className="size-4" aria-hidden="true" />
+                <span className="sr-only">(жаңа бетте ашылады)</span>
+              </a>
             )}
           </section>
         </div>
@@ -69,18 +71,7 @@ export default async function WorkPage({ params }: PageProps<"/oqushy/shygarmala
         <aside className="card h-fit" aria-labelledby="lab">
           <h2 id="lab" className="mb-4 text-xl font-bold">Зертхана</h2>
           {tools.length ? (
-            <ul className="flex flex-col gap-3">
-              {tools.map((t) => (
-                <li key={t.tool}>
-                  <Link href={toolHref(w.slug, t.tool)} data-nav="forward" className="group flex min-h-14 items-center gap-3 rounded-2xl bg-soft p-3 font-bold transition-[background-color,translate] hover:translate-x-1 hover:bg-accent-soft">
-                    <span className={`grid size-10 place-items-center tile rounded-xl text-on-color ${t.color}`} aria-hidden="true">
-                      <t.icon className="size-5" />
-                    </span>
-                    {t.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <ToolLinks slug={w.slug} tools={tools} />
           ) : (
             <p className="text-muted">Бұл шығармаға зертхана құралдары әлі дайындалмаған.</p>
           )}

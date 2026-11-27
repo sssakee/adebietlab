@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Bot, Sparkles } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { sql } from "@/lib/db";
-import { STATUS, studentAssignments, TOOL_LABEL, toolHref } from "@/lib/queries";
+import { STATUS, studentAssignments } from "@/lib/queries";
+import { ToolLinks } from "@/components/ToolLinks";
 import { AI_MODE_LABEL } from "@/lib/ai/prompts/chat";
 import { formatAnswer, TaskFields, type DbTask } from "@/components/TaskFields";
 import { submitAssignment } from "@/app/oqushy/actions";
@@ -30,15 +30,7 @@ export default async function AssignmentPage({ params }: PageProps<"/oqushy/taps
         {header}
         <section className="card">
           <h2 className="mb-4 text-xl font-bold">Зертхана құралдары</h2>
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {a.lab_tools.map((t) => (
-              <li key={t}>
-                <Link href={toolHref(a.work_slug!, t)} className="flex min-h-16 items-center justify-between gap-3 rounded-2xl bg-soft px-5 font-bold hover:bg-accent-soft">
-                  {TOOL_LABEL[t]} <span aria-hidden="true">→</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <ToolLinks slug={a.work_slug!} tools={a.lab_tools} className="grid gap-3 sm:grid-cols-2" />
         </section>
       </div>
     );
@@ -94,7 +86,7 @@ export default async function AssignmentPage({ params }: PageProps<"/oqushy/taps
           ))}
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5">
             <p className="text-sm text-muted">Жабық сұрақтар бірден тексеріледі, ашық жауапты мұғалім бағалайды.</p>
-            <Submit className="btn-primary h-14 px-10">Тапсыру</Submit>
+            <Submit className="btn-primary h-14 px-8">Тапсыру</Submit>
           </div>
         </form>
       )}

@@ -133,7 +133,7 @@ export default async function KartaPage({ params, searchParams }: PageProps<"/oq
               <label htmlFor="evidence" className="label">Жырдан дәлел</label>
               <input id="evidence" name="evidence" required minLength={5} maxLength={300} className="field" placeholder="Мысалы: екі бай балаларын атастырады" />
             </div>
-            <Submit className="btn-ghost sm:col-span-2 sm:justify-self-end">Байланысты сақтау</Submit>
+            <Submit className="btn-primary h-14 px-8 sm:col-span-2 sm:justify-self-end">Байланысты сақтау</Submit>
           </form>
 
           {edges.length > 0 && (
@@ -195,7 +195,7 @@ export default async function KartaPage({ params, searchParams }: PageProps<"/oq
                     ))}
                   </div>
                 </fieldset>
-                <Submit className="btn-primary h-14">{egerde ? "Болжамды жаңарту" : "Мұғалім мен сыныпқа жіберу"}</Submit>
+                <Submit className="btn-primary h-14 px-8">{egerde ? "Болжамды жаңарту" : "Мұғалім мен сыныпқа жіберу"}</Submit>
                 {egerde && <p className="text-center text-sm font-bold text-green-ink">✓ Болжамың сыныпқа жіберілді</p>}
               </form>
             </section>
