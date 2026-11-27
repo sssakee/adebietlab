@@ -106,7 +106,8 @@ const cases: Case[] = [
     expected: "Қатені байқап, ескертеді; материалда жоқ фактіні қоспайды",
     run: async () => {
       const g = await gen("bloom", DEMO_MATERIAL, 3, "Мұхтар Әуезовтің «Қыс» өлеңін талдау");
-      const mentions = JSON.stringify(g).includes("Әуезов");
+      // Only the tasks: the note is expected to name the wrong author when it flags it.
+      const mentions = JSON.stringify(g.tasks).includes("Әуезов");
       return { actual: `note: ${g.note || "—"}; тапсырмаларда «Әуезов» ${mentions ? "бар" : "жоқ"}`, pass: null };
     },
   },
