@@ -154,6 +154,13 @@ create table ai_hints (
   primary key (assignment_id, student_id)
 );
 
+-- Failed sign-ins per account and per IP (src/lib/limit.ts). The app also creates it on first use.
+create table login_attempts (
+  key text primary key,
+  fails int not null default 0,
+  reset_at timestamptz not null
+);
+
 do $$
 declare t text;
 begin

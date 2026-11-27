@@ -17,7 +17,9 @@ export function NewClassForm() {
         </select>
       </div>
       <button className="btn-primary h-12" disabled={pending}>Сынып ашу</button>
-      {state?.error && <p role="alert" className="text-sm font-bold text-red-ink sm:col-span-3">{state.error}</p>}
+      <p role="status" aria-live="polite" className={`text-sm font-bold sm:col-span-3 ${state?.error ? "text-red-ink" : "text-green-ink"}`}>
+        {state?.error || (state && "ok" in state && `✓ ${state.ok}`)}
+      </p>
     </form>
   );
 }

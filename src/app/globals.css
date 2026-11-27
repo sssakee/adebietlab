@@ -40,11 +40,52 @@
   --color-violet-soft: #efeafd;
   --color-navy: #1a4f9e;
   --color-navy-deep: #163f80;
+  /* surfaces and text on strong colours, so dark mode can swap them */
+  --color-surface: #ffffff;
+  --color-accent-soft: #e4efff;
+  --color-sunk: #dbe8fb;
+  --color-violet-faint: #f5f3ff;
+  --color-on-color: #ffffff;
+  --color-on-gold: #10264a;
+  --color-muted-line: #9aa8bd;
+  --color-node-line: #c6d4ea;
   --radius-card: 28px;
+}
+
+/* Dark mode follows the device setting. Every text/background pair here is ≥ 4.5:1. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary: #5b9bff;
+    --color-primary-dark: #8cbaff;
+    --color-bg: #0d1729;
+    --color-surface: #15233b;
+    --color-soft: #1b2c48;
+    --color-accent-soft: #1f3a66;
+    --color-sunk: #24406e;
+    --color-violet-faint: #1d1a3a;
+    --color-line: #2a3d5e;
+    --color-ink: #e8eef8;
+    --color-muted: #a3b1c7;
+    --color-gold-soft: #3a300f;
+    --color-red: #e0674b;
+    --color-red-ink: #ff8f75;
+    --color-red-soft: #3d1f1a;
+    --color-green: #22b87a;
+    --color-green-ink: #4fd39b;
+    --color-green-soft: #12352a;
+    --color-violet: #a891ff;
+    --color-violet-soft: #2a2350;
+    --color-navy: #173f7e;
+    --color-navy-deep: #12346a;
+    --color-on-color: #0d1729;
+    --color-muted-line: #6a7a94;
+    --color-node-line: #3a5078;
+  }
 }
 
 @layer base {
   html {
+    color-scheme: light dark;
     background: var(--color-bg);
     color: var(--color-ink);
     -webkit-font-smoothing: antialiased;
@@ -63,25 +104,25 @@
 }
 
 @utility card {
-  @apply rounded-[var(--radius-card)] bg-white p-6 shadow-[0_1px_2px_rgba(16,38,74,0.04),0_8px_24px_-12px_rgba(16,38,74,0.12)];
+  @apply rounded-[var(--radius-card)] bg-surface p-6 shadow-[0_1px_2px_rgba(16,38,74,0.04),0_8px_24px_-12px_rgba(16,38,74,0.12)];
 }
 @utility btn {
   @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-6 font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
 }
 @utility btn-primary {
-  @apply btn bg-primary text-white hover:bg-primary-dark;
+  @apply btn bg-primary text-on-color hover:bg-primary-dark;
 }
 @utility btn-gold {
-  @apply btn bg-gold text-ink hover:brightness-95;
+  @apply btn bg-gold text-on-gold hover:brightness-95;
 }
 @utility btn-ghost {
-  @apply btn border-2 border-line bg-white text-ink hover:border-primary;
+  @apply btn border-2 border-line bg-surface text-ink hover:border-primary;
 }
 @utility chip {
-  @apply inline-flex min-h-11 items-center rounded-2xl border-2 border-line bg-white px-5 font-bold text-ink transition-colors hover:border-primary;
+  @apply inline-flex min-h-11 items-center rounded-2xl border-2 border-line bg-surface px-5 font-bold text-ink transition-colors hover:border-primary;
   &[aria-pressed="true"],
   &:has(input:checked) {
-    @apply border-primary bg-[#e4efff] text-primary-dark;
+    @apply border-primary bg-accent-soft text-primary-dark;
   }
   &:has(input:focus-visible) {
     outline: 3px solid var(--color-primary);
@@ -89,7 +130,7 @@
   }
 }
 @utility field {
-  @apply w-full rounded-2xl border-2 border-line bg-white px-4 py-3 text-ink placeholder:text-muted/80 focus:border-primary focus:outline-none;
+  @apply w-full rounded-2xl border-2 border-line bg-surface px-4 py-3 text-ink placeholder:text-muted/80 focus:border-primary focus:outline-none;
 }
 @utility label {
   @apply mb-1.5 block text-sm font-bold text-ink;
@@ -109,7 +150,7 @@
   50% { transform: translateY(-8px); }
 }
 @media (prefers-reduced-motion: no-preference) {
-  main > :not(.fixed),
+  /* Lists rise in; the page header is never animated, so the largest paint is not delayed. */
   .rise > * {
     animation: rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
   }

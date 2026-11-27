@@ -26,17 +26,17 @@ export default async function StudentHome() {
     <div className="grid gap-6 xl:grid-cols-[1fr_330px]">
       <div className="flex min-w-0 flex-col gap-6">
         <div className="flex flex-wrap items-center gap-3">
-          <form action="/oqushy/shygarmalar" role="search" className="relative min-w-60 flex-1">
+          <form action="/oqushy/shygarmalar" role="search" className="relative w-full sm:w-auto sm:min-w-60 sm:flex-1">
             <Search className="pointer-events-none absolute left-5 top-1/2 size-5 -translate-y-1/2 text-muted" aria-hidden="true" />
             <label htmlFor="q" className="sr-only">Іздеу</label>
-            <input id="q" name="q" placeholder="Шығарма, ақын, әдеби термин іздеу…" className="h-14 w-full rounded-full bg-white pl-13 pr-5 font-medium shadow-sm placeholder:text-muted focus:outline-none focus-visible:ring-3 focus-visible:ring-primary" />
+            <input id="q" name="q" placeholder="Шығарма не ақын іздеу…" className="h-14 w-full rounded-full bg-surface pl-13 pr-5 font-medium shadow-sm placeholder:text-muted focus:outline-none focus-visible:ring-3 focus-visible:ring-primary" />
           </form>
-          <span className="flex h-14 items-center gap-2 rounded-full bg-white px-5 font-bold shadow-sm" title="Қатарынан жұмыс істеген күн">
+          <span className="flex h-14 items-center gap-2 rounded-full bg-surface px-5 font-bold shadow-sm" title="Қатарынан жұмыс істеген күн">
             <Flame className="size-5 text-red" aria-hidden="true" />
             <span className="num">{days}</span>
             <span className="sr-only">күн қатарынан</span>
           </span>
-          <span className="flex h-14 items-center gap-2 rounded-full bg-white px-5 font-bold shadow-sm">
+          <span className="flex h-14 items-center gap-2 rounded-full bg-surface px-5 font-bold shadow-sm">
             <Star className="size-5 fill-gold text-gold" aria-hidden="true" />
             <span className="num">{u.points}</span>
             <span className="text-sm text-muted">ашылым</span>
@@ -72,7 +72,7 @@ export default async function StudentHome() {
               <p className="mt-1 text-sm font-medium text-muted">
                 {map ? `Табылған байланыс: ${map.found} / ${map.total}` : "Әлі басталмады — кейіпкерлерді байланыстырып көр"}
               </p>
-              <div className="mt-3 h-2.5 rounded-full bg-[#e4efff]" role="progressbar" aria-label="Табылған байланыстар" aria-valuemin={0} aria-valuemax={map?.total ?? 6} aria-valuenow={map?.found ?? 0}>
+              <div className="mt-3 h-2.5 rounded-full bg-accent-soft" role="progressbar" aria-label="Табылған байланыстар" aria-valuemin={0} aria-valuemax={map?.total ?? 6} aria-valuenow={map?.found ?? 0}>
                 <div className="h-full rounded-full bg-primary" style={{ width: `${map ? (100 * map.found) / map.total : 0}%` }} />
               </div>
             </div>
@@ -131,7 +131,7 @@ export default async function StudentHome() {
               <li
                 key={l.name}
                 aria-current={i === lvl.index ? "step" : undefined}
-                className={`rounded-2xl px-1 py-3 text-center text-xs font-bold ${i === lvl.index ? "bg-gold text-ink" : i === lvl.index + 1 ? "border-2 border-gold text-gold" : "bg-white/10"}`}
+                className={`rounded-2xl px-1 py-3 text-center text-xs font-bold ${i === lvl.index ? "bg-gold text-on-gold" : i === lvl.index + 1 ? "border-2 border-gold text-gold" : "bg-white/10"}`}
               >
                 {l.name}
               </li>

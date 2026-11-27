@@ -57,7 +57,7 @@ export function PoemLab({ slug, lines }: { slug: string; lines: string[] }) {
               <span className="flex-1 text-lg font-medium sm:text-xl">
                 {showRhyme ? <Ending line={showSyl ? syllabifyLine(l) : l} label={scheme[i]} color={RHYME_COLORS[labels.indexOf(scheme[i])]} /> : showSyl ? syllabifyLine(l) : l}
               </span>
-              {showSyl && <span className="num tag shrink-0 bg-[#e4efff] text-primary">{countSyllables(l)} буын</span>}
+              {showSyl && <span className="num tag shrink-0 bg-accent-soft text-primary">{countSyllables(l)} буын</span>}
             </li>
           ))}
         </ol>
@@ -124,7 +124,7 @@ export function OwnText() {
       <h2 id="own" className="text-lg font-bold">Өз мәтініңді өлше</h2>
       <p className="mt-1 text-sm text-white/85">Әр жолды жаңа жолдан жаз — буын саны бірден шығады.</p>
       <label htmlFor="own-text" className="sr-only">Өз мәтінің</label>
-      <textarea id="own-text" rows={4} value={text} onChange={(e) => setText(e.target.value)} className="mt-4 w-full rounded-2xl bg-white p-4 font-medium text-ink focus:outline-none" />
+      <textarea id="own-text" rows={4} value={text} onChange={(e) => setText(e.target.value)} className="mt-4 w-full rounded-2xl bg-surface p-4 font-medium text-ink focus:outline-none" />
       <ul className="mt-3 flex flex-col gap-1.5 text-sm" aria-live="polite">
         {lines.map((l, i) => (
           <li key={i} className="flex justify-between gap-3">

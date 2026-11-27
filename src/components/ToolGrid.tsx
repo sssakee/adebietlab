@@ -14,7 +14,7 @@ export function ToolGrid() {
       {TOOLS.map((t) => {
         const body = (
           <>
-            <span className={`grid size-14 shrink-0 place-items-center rounded-2xl text-white ${t.color}`} aria-hidden="true">
+            <span className={`grid size-14 shrink-0 place-items-center rounded-2xl text-on-color ${t.color}`} aria-hidden="true">
               <t.icon className="size-7" />
             </span>
             <span>

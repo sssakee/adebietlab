@@ -7,6 +7,7 @@ import { TASK_TYPE_LABEL } from "@/lib/ai/schemas";
 import type { DbTask } from "@/components/TaskFields";
 import { approveSet, assignSet, deleteTask } from "../../actions";
 import { EditTask } from "./EditTask";
+import { Submit } from "@/components/Submit";
 
 export const metadata = { title: "Жинақты қарау" };
 
@@ -46,9 +47,9 @@ export default async function SetPage({ params }: PageProps<"/mugalim/bank/[id]"
               <p className="text-xs font-bold text-muted">{i + 1}. {TASK_TYPE_LABEL[t.type]} · {t.points} балл{t.source_ref && ` · дереккөзі: ${t.source_ref}`}</p>
               {draft && (
                 <form action={deleteTask.bind(null, id, t.id)}>
-                  <button className="flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-bold text-red-ink hover:bg-red-soft">
+                  <Submit className="flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-bold text-red-ink hover:bg-red-soft">
                     <Trash2 className="size-4" aria-hidden="true" /> Жою
-                  </button>
+                  </Submit>
                 </form>
               )}
             </div>
@@ -68,7 +69,7 @@ export default async function SetPage({ params }: PageProps<"/mugalim/bank/[id]"
       {draft ? (
         <form action={approveSet.bind(null, id)} className="card flex flex-wrap items-center justify-between gap-4">
           <p className="text-muted">Барлық тапсырманы тексердіңіз бе? Бекіткеннен кейін жинақты сыныпқа беруге болады.</p>
-          <button className="btn-primary h-14 px-10" disabled={!tasks.length}>Бекіту</button>
+          <Submit className="btn-primary h-14 px-10" disabled={!tasks.length}>Бекіту</Submit>
         </form>
       ) : (
         <form action={assignSet.bind(null, id)} className="card grid items-end gap-4 md:grid-cols-4">
@@ -91,7 +92,7 @@ export default async function SetPage({ params }: PageProps<"/mugalim/bank/[id]"
               <option value="full">ЖИ рұқсат етілген</option>
             </select>
           </div>
-          <button className="btn-primary h-12" disabled={!classes.length}>Сыныпқа жіберу</button>
+          <Submit className="btn-primary h-12" disabled={!classes.length}>Сыныпқа жіберу</Submit>
         </form>
       )}
     </div>

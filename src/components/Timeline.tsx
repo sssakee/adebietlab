@@ -52,7 +52,7 @@ export function Timeline({ slug, events, startOrder, startElements }: { slug: st
               >
                 <span className="flex items-center gap-2">
                   <GripVertical className="size-5 cursor-grab text-muted" aria-hidden="true" />
-                  <span className="num grid size-8 place-items-center rounded-full bg-white text-sm font-bold">{i + 1}</span>
+                  <span className="num grid size-8 place-items-center rounded-full bg-surface text-sm font-bold">{i + 1}</span>
                 </span>
                 <span className="font-bold">{byId[id].text}</span>
                 <span>
@@ -68,10 +68,10 @@ export function Timeline({ slug, events, startOrder, startElements }: { slug: st
                   </select>
                 </span>
                 <span className="flex gap-1">
-                  <button type="button" onClick={() => move(i, i - 1)} disabled={i === 0} className="grid size-11 place-items-center rounded-xl bg-white disabled:opacity-40" aria-label={`«${byId[id].text}» жоғары`}>
+                  <button type="button" onClick={() => move(i, i - 1)} disabled={i === 0} className="grid size-11 place-items-center rounded-xl bg-surface disabled:opacity-40" aria-label={`«${byId[id].text}» жоғары`}>
                     <ArrowUp className="size-4" aria-hidden="true" />
                   </button>
-                  <button type="button" onClick={() => move(i, i + 1)} disabled={i === order.length - 1} className="grid size-11 place-items-center rounded-xl bg-white disabled:opacity-40" aria-label={`«${byId[id].text}» төмен`}>
+                  <button type="button" onClick={() => move(i, i + 1)} disabled={i === order.length - 1} className="grid size-11 place-items-center rounded-xl bg-surface disabled:opacity-40" aria-label={`«${byId[id].text}» төмен`}>
                     <ArrowDown className="size-4" aria-hidden="true" />
                   </button>
                 </span>

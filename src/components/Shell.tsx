@@ -4,9 +4,9 @@ import { Logo } from "./Logo";
 import { NavLink } from "./NavLink";
 import { SoundToggle } from "./Sfx";
 
-export type NavItem = { href: string; label: string; icon: React.ReactNode; exact?: boolean };
+export type NavItem = { href: string; label: string; short?: string; icon: React.ReactNode; exact?: boolean };
 
-/** Sidebar on desktop, a scrollable top bar on phones. */
+/** Sidebar on desktop; on phones a compact top bar and a bottom tab bar. */
 export function Shell({
   nav,
   subtitle,
@@ -21,15 +21,16 @@ export function Shell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mx-auto flex max-w-[1500px] flex-col gap-6 p-3 sm:p-6 lg:flex-row">
+    <div className="mx-auto flex max-w-[1500px] flex-col gap-4 p-3 sm:gap-6 sm:p-6 lg:flex-row">
       <a href="#main" className="sr-only focus:not-sr-only">
         Негізгі мазмұнға өту
       </a>
-      <aside className="card flex shrink-0 flex-col gap-4 p-4 lg:sticky lg:top-6 lg:h-[calc(100dvh-3rem)] lg:w-64 lg:p-5">
-        <div className="px-1 pt-1">
+      {/* Phone: one compact bar on top, navigation in a thumb-reach bar at the bottom. */}
+      <aside className="card flex shrink-0 items-center justify-between gap-3 p-3 lg:sticky lg:top-6 lg:h-[calc(100dvh-3rem)] lg:w-64 lg:flex-col lg:items-stretch lg:justify-start lg:gap-4 lg:p-5">
+        <div className="min-w-0 px-1 lg:pt-1">
           <Logo subtitle={subtitle} />
         </div>
-        <nav aria-label="Негізгі мәзір" className="flex flex-wrap gap-1 lg:flex-col">
+        <nav aria-label="Негізгі мәзір" className="hidden flex-col gap-1 lg:flex">
           {nav.map((n) => (
             <NavLink key={n.href} href={n.href} exact={n.exact}>
               <span className="shrink-0 [&>svg]:size-5" aria-hidden="true">
@@ -39,28 +40,40 @@ export function Shell({
             </NavLink>
           ))}
         </nav>
-        <div className="mt-auto flex flex-col gap-3">
+        <div className="flex items-center gap-1 lg:mt-auto lg:flex-col lg:items-stretch lg:gap-3">
           {aside && <div className="hidden lg:block">{aside}</div>}
           <SoundToggle />
-          <div className="flex items-center gap-3 rounded-2xl bg-soft p-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#dbe8fb] font-bold text-primary" aria-hidden="true">
+          <div className="flex items-center gap-3 rounded-2xl lg:bg-soft lg:p-3">
+            <span className="hidden size-10 shrink-0 place-items-center rounded-full bg-sunk font-bold text-primary-dark lg:grid" aria-hidden="true">
               {user.name[0]}
             </span>
-            <span className="min-w-0 flex-1">
+            <span className="hidden min-w-0 flex-1 lg:block">
               <span className="block font-bold leading-tight">{user.name}</span>
               <span className="block text-xs text-muted">{user.note}</span>
             </span>
             <form action={logout}>
-              <button className="grid size-11 place-items-center rounded-full text-muted hover:bg-white hover:text-ink" aria-label="Шығу">
+              <button className="grid size-11 place-items-center rounded-full text-muted hover:bg-surface hover:text-ink" aria-label={`Шығу (${user.name})`}>
                 <LogOut className="size-5" aria-hidden="true" />
               </button>
             </form>
           </div>
         </div>
       </aside>
-      <main id="main" className="min-w-0 flex-1">
+      <main id="main" className="min-w-0 flex-1 pb-24 lg:pb-0">
         {children}
       </main>
+      <nav aria-label="Негізгі мәзір" className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden">
+        <div className="mx-auto grid max-w-lg grid-cols-5">
+          {nav.map((n) => (
+            <NavLink key={n.href} href={n.href} exact={n.exact} tab>
+              <span className="[&>svg]:size-6" aria-hidden="true">
+                {n.icon}
+              </span>
+              <span>{n.short ?? n.label}</span>
+            </NavLink>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 }

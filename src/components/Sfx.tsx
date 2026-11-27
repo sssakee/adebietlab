@@ -56,10 +56,10 @@ export function SoundToggle() {
         window.dispatchEvent(new Event(KEY));
         if (!on) playSfx(true);
       }}
-      className="flex min-h-11 items-center gap-2 rounded-2xl px-3 text-sm font-bold text-muted hover:bg-soft hover:text-ink"
+      className="flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-2xl px-3 lg:justify-start text-sm font-bold text-muted hover:bg-soft hover:text-ink"
     >
       {on ? <Volume2 className="size-5" aria-hidden="true" /> : <VolumeX className="size-5" aria-hidden="true" />}
-      {on ? "Дыбыс қосулы" : "Дыбыс өшірулі"}
+      <span className="max-lg:sr-only">{on ? "Дыбыс қосулы" : "Дыбыс өшірулі"}</span>
     </button>
   );
 }

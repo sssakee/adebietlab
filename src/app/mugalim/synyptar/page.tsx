@@ -23,7 +23,7 @@ export default async function Classes() {
           <section key={c.id} className="card" aria-labelledby={`c-${c.id}`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 id={`c-${c.id}`} className="text-2xl font-bold">{c.name}</h2>
-              <p className="rounded-2xl bg-[#e4efff] px-4 py-2 font-bold text-primary">
+              <p className="rounded-2xl bg-accent-soft px-4 py-2 font-bold text-primary">
                 Сынып коды: <span className="num text-xl tracking-[0.2em]">{c.join_code}</span>
               </p>
             </div>

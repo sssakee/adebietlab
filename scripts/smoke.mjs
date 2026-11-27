@@ -10,6 +10,11 @@ const st = await ctx();
 await st.goto(base + "/kiru");
 await st.fill("#code", "LAB7QA"); await st.fill("#name", "Айару"); await st.fill("#pin", "0000"); await st.click("text=Зертханаға кіру");
 await st.waitForSelector("[role=alert]:has-text('PIN')"); log("wrong PIN rejected");
+// brute-force guard: 5 wrong PINs for one student block that student only
+const tryPin = async (pin) => { await st.fill("#name", "Дана"); await st.fill("#pin", pin); await Promise.all([st.waitForResponse((r) => r.request().method() === "POST"), st.click("text=Зертханаға кіру")]); };
+for (let i = 0; i < 5; i++) await tryPin("0000");
+await tryPin("1234"); await st.waitForSelector("text=Тым көп қате әрекет"); log("sign-in limit holds");
+await st.fill("#name", "Айару");
 await st.fill("#pin", "1234"); await st.click("text=Зертханаға кіру"); await st.waitForURL(/oqushy/);
 // role guard
 await st.goto(base + "/mugalim"); log("student → /mugalim lands on", new URL(st.url()).pathname);

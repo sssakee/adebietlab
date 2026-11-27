@@ -78,11 +78,12 @@ export async function saveEgerde(slug: string, f: FormData) {
   if (!w?.lab.egerde) return;
   const prediction = str(f, "prediction").slice(0, 2000);
   const evidence = str(f, "evidence").slice(0, 500);
-  if (prediction.length < 10) return;
+  if (prediction.length < 10) redirect(`/oqushy/zertkhana/karta/${slug}?eg=short#egerde`);
   const checklist = w.lab.egerde.checklist.map((_, i) => f.get(`c${i}`) === "on");
   const prev = await saveLab(u.id, w.id, "egerde", { prediction, evidence, checklist }, {}, true);
   if (!prev) await addPoints(u.id, POINTS.egerde);
   revalidatePath(`/oqushy/zertkhana/karta/${slug}`);
+  redirect(`/oqushy/zertkhana/karta/${slug}?eg=ok#egerde`);
 }
 
 export async function toggleVote(slug: string, labWorkId: string) {

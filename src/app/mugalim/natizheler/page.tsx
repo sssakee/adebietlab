@@ -38,7 +38,7 @@ export default async function Results({ searchParams }: PageProps<"/mugalim/nati
           <nav aria-label="Тапсырмалар" className="flex flex-wrap gap-2">
             {assignments.map((x) => (
               <Link key={x.id} href={`/mugalim/natizheler?c=${cls.id}&a=${x.id}`} aria-current={x.id === a.id ? "page" : undefined}
-                className={`tag px-4 py-2.5 text-sm ${x.id === a.id ? "bg-primary text-white" : "bg-white text-ink hover:bg-[#e4efff]"}`}>
+                className={`tag px-4 py-2.5 text-sm ${x.id === a.id ? "bg-primary text-on-color" : "bg-surface text-ink hover:bg-accent-soft"}`}>
                 {x.kind === "lab" ? `Зертхана: «${x.title}»` : x.title}{x.due && ` · ${x.due}`}
               </Link>
             ))}

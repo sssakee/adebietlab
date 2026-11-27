@@ -7,11 +7,11 @@ import { Shell } from "@/components/Shell";
 import { ChatWidget } from "@/components/ChatWidget";
 
 const NAV = [
-  { href: "/oqushy", label: "Басты бет", icon: <Home />, exact: true },
-  { href: "/oqushy/shygarmalar", label: "Шығармалар", icon: <BookOpen /> },
-  { href: "/oqushy/zertkhana", label: "Зертхана құралдары", icon: <FlaskConical /> },
-  { href: "/oqushy/tapsyrmalar", label: "Тапсырмаларым", icon: <ListChecks /> },
-  { href: "/oqushy/zhetistikter", label: "Жетістіктер", icon: <Trophy /> },
+  { href: "/oqushy", label: "Басты бет", short: "Басты", icon: <Home />, exact: true },
+  { href: "/oqushy/shygarmalar", label: "Шығармалар", short: "Шығарма", icon: <BookOpen /> },
+  { href: "/oqushy/zertkhana", label: "Зертхана құралдары", short: "Зертхана", icon: <FlaskConical /> },
+  { href: "/oqushy/tapsyrmalar", label: "Тапсырмаларым", short: "Тапсырма", icon: <ListChecks /> },
+  { href: "/oqushy/zhetistikter", label: "Жетістіктер", short: "Жетістік", icon: <Trophy /> },
 ];
 
 export default async function StudentLayout({ children }: LayoutProps<"/oqushy">) {
@@ -32,7 +32,7 @@ export default async function StudentLayout({ children }: LayoutProps<"/oqushy">
   return (
     <Shell nav={NAV} aside={aside} user={{ name: u.full_name, note: `${u.class_name ?? ""} · ${levelFor(u.points).name} зерттеуші` }}>
       {/* room below content so the floating chat button never covers the last button */}
-      <div className="pb-24">{children}</div>
+      <div className="lg:pb-24">{children}</div>
       <ChatWidget />
     </Shell>
   );

@@ -17,13 +17,18 @@ function secret() {
 
 const sign = (id: string) => createHmac("sha256", secret()).update(id).digest("base64url");
 
+const MAX_AGE = 60 * 60 * 24 * 30;
+
+// The expiry is inside the signed value, so a copied cookie stops working after 30 days
+// even if the browser that holds it ignores maxAge.
 export async function startSession(userId: string) {
-  (await cookies()).set(COOKIE, `${userId}.${sign(userId)}`, {
+  const payload = `${userId}.${Math.floor(Date.now() / 1000) + MAX_AGE}`;
+  (await cookies()).set(COOKIE, `${payload}.${sign(payload)}`, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: MAX_AGE,
   });
 }
 
@@ -44,10 +49,11 @@ export type User = {
 export const getUser = cache(async (): Promise<User | null> => {
   const raw = (await cookies()).get(COOKIE)?.value;
   if (!raw) return null;
-  const [id, mac] = raw.split(".");
+  const [id, exp, mac] = raw.split(".");
+  if (!(Number(exp) > Date.now() / 1000)) return null;
   let expected: string;
   try {
-    expected = sign(id);
+    expected = sign(`${id}.${exp}`);
   } catch {
     return null; // misconfigured secret must not take the whole site down
   }

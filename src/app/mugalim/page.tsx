@@ -5,6 +5,7 @@ import { pickClass } from "@/lib/teacher";
 import type { Character } from "@/lib/queries";
 import { createLabAssignment, gradeEgerde } from "./actions";
 import { ClassPicker } from "./ClassPicker";
+import { Submit } from "@/components/Submit";
 
 export const metadata = { title: "Шолу" };
 
@@ -142,7 +143,7 @@ export default async function TeacherHome({ searchParams }: PageProps<"/mugalim"
                 <input id="due" name="due_at" type="date" className="field" />
               </div>
             </div>
-            <button className="btn-primary h-12">Сыныпқа жіберу</button>
+            <Submit className="btn-primary h-12">Сыныпқа жіберу</Submit>
           </form>
         </section>
 
@@ -175,7 +176,7 @@ export default async function TeacherHome({ searchParams }: PageProps<"/mugalim"
               {egerde.length > 1 && (
                 <nav aria-label="Басқа жұмыстар" className="mt-4 flex flex-wrap gap-2">
                   {egerde.map((e) => (
-                    <Link key={e.id} href={`/mugalim?c=${cls.id}&g=${e.id}`} aria-current={e.id === g.id ? "true" : undefined} className={`tag px-3 py-2 ${e.id === g.id ? "bg-primary text-white" : e.teacher_scores ? "bg-green-soft text-green-ink" : "bg-gold-soft text-ink"}`}>
+                    <Link key={e.id} href={`/mugalim?c=${cls.id}&g=${e.id}`} aria-current={e.id === g.id ? "true" : undefined} className={`tag px-3 py-2 ${e.id === g.id ? "bg-primary text-on-color" : e.teacher_scores ? "bg-green-soft text-green-ink" : "bg-gold-soft text-ink"}`}>
                       {e.full_name}{e.teacher_scores ? " ✓" : ""}
                     </Link>
                   ))}
@@ -196,9 +197,10 @@ export default async function TeacherHome({ searchParams }: PageProps<"/mugalim"
                   </div>
                 </fieldset>
               ))}
+              {sp.graded && <p role="status" className="rounded-2xl bg-green-soft p-3 text-sm font-bold text-green-ink">✓ Баға сақталды, оқушы оны өз бетінде көреді.</p>}
               <div className="flex items-center justify-between gap-3">
                 <p className="num text-lg font-bold">{g.teacher_scores ? `Жиыны: ${g.teacher_scores.reduce((a, b) => a + b, 0)} / 6` : "Жиыны: — / 6"}</p>
-                <button className="btn-primary">Бағаны сақтау</button>
+                <Submit className="btn-primary">Бағаны сақтау</Submit>
               </div>
             </form>
           </div>
@@ -212,7 +214,7 @@ export default async function TeacherHome({ searchParams }: PageProps<"/mugalim"
 
 function Stat({ label, value, sub, gold }: { label: string; value: string; sub?: string; gold?: boolean }) {
   return (
-    <div className={`rounded-3xl p-5 ${gold ? "bg-gold-soft" : "bg-white"}`}>
+    <div className={`rounded-3xl p-5 ${gold ? "bg-gold-soft" : "bg-surface"}`}>
       <p className="text-sm font-bold text-muted">{label}</p>
       <p className="mt-2">
         <span className="num text-3xl font-bold">{value}</span> <span className="text-sm font-bold text-muted">{sub}</span>

@@ -11,7 +11,7 @@ export function GenForm({ methods, works }: { methods: { id: string; name: strin
         <h2 id="mat" className="text-xl font-bold">1. Материал</h2>
         <div>
           <label htmlFor="file" className="label">Файл жүктеу (TXT, DOCX, 10 МБ-қа дейін)</label>
-          <input id="file" name="file" type="file" accept=".txt,.docx" className="field file:mr-4 file:rounded-full file:border-0 file:bg-[#e4efff] file:px-4 file:py-2 file:font-bold file:text-primary" />
+          <input id="file" name="file" type="file" accept=".txt,.docx" className="field file:mr-4 file:rounded-full file:border-0 file:bg-accent-soft file:px-4 file:py-2 file:font-bold file:text-primary" />
         </div>
         <div>
           <label htmlFor="text" className="label">немесе мәтінді қойыңыз</label>

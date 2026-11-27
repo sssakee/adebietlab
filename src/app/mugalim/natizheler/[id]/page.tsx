@@ -5,6 +5,7 @@ import { requireRole } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { formatAnswer, type DbTask } from "@/components/TaskFields";
 import { saveGrades, suggestScores } from "../../actions";
+import { Submit } from "@/components/Submit";
 
 export const metadata = { title: "Бағалау" };
 
@@ -55,7 +56,7 @@ export default async function Grade({ params, searchParams }: PageProps<"/mugali
 
       {open.length > 0 && (
         <form action={suggestScores.bind(null, id)} className="flex justify-end">
-          <button className="btn-ghost gap-2"><Sparkles className="size-4 text-violet" aria-hidden="true" /> ЖИ-ден ұсыныс балы мен пікір алу</button>
+          <Submit className="btn-ghost gap-2"><Sparkles className="size-4 text-violet" aria-hidden="true" /> ЖИ-ден ұсыныс балы мен пікір алу</Submit>
         </form>
       )}
 
@@ -88,7 +89,7 @@ export default async function Grade({ params, searchParams }: PageProps<"/mugali
           <label htmlFor="fb" className="label">Оқушыға пікір</label>
           <textarea id="fb" name="feedback" rows={3} maxLength={1000} defaultValue={s.feedback || (open.map((t) => s.ai_suggestions[t.id]?.feedback).filter(Boolean).join(" "))} className="field" />
           <div className="mt-4 flex justify-end">
-            <button className="btn-primary h-12 px-8">Бағаны сақтау</button>
+            <Submit className="btn-primary h-12 px-8">Бағаны сақтау</Submit>
           </div>
         </section>
       </form>

@@ -7,6 +7,7 @@ import { getWork, type Character } from "@/lib/queries";
 import { addEdge, removeEdge, saveEgerde, toggleVote } from "@/app/oqushy/actions";
 import { LabHeader } from "../../LabHeader";
 import { Sfx } from "@/components/Sfx";
+import { Submit } from "@/components/Submit";
 
 export const metadata = { title: "Кейіпкер картасы" };
 
@@ -14,9 +15,9 @@ const W = 600;
 const H = 340;
 const NODE = { w: 150, h: 54 };
 const KIND_STYLE: Record<Character["kind"], { fill: string; stroke: string }> = {
-  main: { fill: "#e4efff", stroke: "#1d6fe0" },
-  secondary: { fill: "#ffffff", stroke: "#c6d4ea" },
-  antagonist: { fill: "#fdeee9", stroke: "#d2553a" },
+  main: { fill: "var(--color-accent-soft)", stroke: "var(--color-primary)" },
+  secondary: { fill: "var(--color-surface)", stroke: "var(--color-node-line)" },
+  antagonist: { fill: "var(--color-red-soft)", stroke: "var(--color-red)" },
 };
 
 function Line({ a, b, dashed, color, label, q }: { a: Character; b: Character; dashed?: boolean; color: string; label?: string; q?: boolean }) {
@@ -26,23 +27,24 @@ function Line({ a, b, dashed, color, label, q }: { a: Character; b: Character; d
     <g>
       <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={color} strokeWidth={dashed ? 1.8 : 2.2} strokeDasharray={dashed ? "6 5" : undefined} />
       {label && (
-        <text x={mx} y={my - 8} textAnchor="middle" className="fill-ink text-[11px] font-bold" paintOrder="stroke" stroke="#f5f3ff" strokeWidth={5}>
+        <text x={mx} y={my - 8} textAnchor="middle" className="fill-ink text-[11px] font-bold" paintOrder="stroke" stroke="var(--color-violet-faint)" strokeWidth={5}>
           {label}
         </text>
       )}
       {q && (
         <g>
-          <rect x={mx - 11} y={my - 9} width={22} height={18} rx={6} fill="#b8432a" />
-          <text x={mx} y={my + 4} textAnchor="middle" className="fill-white text-[11px] font-bold">?</text>
+          <rect x={mx - 11} y={my - 9} width={22} height={18} rx={6} fill="var(--color-red-ink)" />
+          <text x={mx} y={my + 4} textAnchor="middle" className="fill-on-color text-[11px] font-bold">?</text>
         </g>
       )}
     </g>
   );
 }
 
-export default async function KartaPage({ params }: PageProps<"/oqushy/zertkhana/karta/[slug]">) {
+export default async function KartaPage({ params, searchParams }: PageProps<"/oqushy/zertkhana/karta/[slug]">) {
   const u = await requireRole("student");
   const slug = (await params).slug;
+  const eg = (await searchParams).eg;
   const w = await getWork(slug);
   if (!w?.lab.characters || !w.lab.reference) notFound();
   const chars = w.lab.characters;
@@ -71,8 +73,8 @@ export default async function KartaPage({ params }: PageProps<"/oqushy/zertkhana
       <LabHeader kicker={`${w.grades.join(", ")}-сынып · ${w.genre}`} title={`«${w.title}»`} back={`/oqushy/shygarmalar/${w.slug}`}>
         <nav aria-label="Құралдар" className="flex flex-wrap gap-2">
           <a href="#map" className="tag bg-violet-soft px-4 py-3 text-sm text-violet">Кейіпкер картасы</a>
-          <a href="#egerde" className="tag bg-soft px-4 py-3 text-sm text-ink hover:bg-[#e4efff]">«Егер...» тәжірибесі</a>
-          {w.lab.timeline && <a href={`/oqushy/zertkhana/zheli/${w.slug}`} className="tag bg-soft px-4 py-3 text-sm text-ink hover:bg-[#e4efff]">Оқиға желісі</a>}
+          <a href="#egerde" className="tag bg-soft px-4 py-3 text-sm text-ink hover:bg-accent-soft">«Егер...» тәжірибесі</a>
+          {w.lab.timeline && <a href={`/oqushy/zertkhana/zheli/${w.slug}`} className="tag bg-soft px-4 py-3 text-sm text-ink hover:bg-accent-soft">Оқиға желісі</a>}
         </nav>
       </LabHeader>
 
@@ -87,16 +89,16 @@ export default async function KartaPage({ params }: PageProps<"/oqushy/zertkhana
           </div>
           <p className="mt-2 text-sm font-medium text-muted">Кейіпкерлерді байланыстыр, әр байланысқа жырдан дәлел жаз. Үзік сызықтар — әлі анықталмаған байланыстар.</p>
 
-          <div className="relative mt-5 overflow-x-auto rounded-3xl bg-[#f5f3ff] p-3">
+          <div className="relative mt-5 overflow-x-auto rounded-3xl bg-violet-faint p-3">
             <svg viewBox={`0 0 ${W} ${H}`} className="min-w-[520px]" role="img" aria-label={`Кейіпкер картасы, табылған байланыс: ${cmp.found} / ${cmp.total}`}>
               {cmp.missing.map((e) => (
-                <Line key={`m${e.from}${e.to}`} a={byId[e.from]} b={byId[e.to]} dashed color="#d2553a" q />
+                <Line key={`m${e.from}${e.to}`} a={byId[e.from]} b={byId[e.to]} dashed color="var(--color-red)" q />
               ))}
               {cmp.extra.map((e) => (
-                <Line key={`x${e.from}${e.to}`} a={byId[e.from]} b={byId[e.to]} dashed color="#9aa8bd" />
+                <Line key={`x${e.from}${e.to}`} a={byId[e.from]} b={byId[e.to]} dashed color="var(--color-muted-line)" />
               ))}
               {cmp.matched.map((e) => (
-                <Line key={`f${e.from}${e.to}`} a={byId[e.from]} b={byId[e.to]} color="#6b4bd8" label={e.label} />
+                <Line key={`f${e.from}${e.to}`} a={byId[e.from]} b={byId[e.to]} color="var(--color-violet)" label={e.label} />
               ))}
               {chars.map((c) => (
                 <g key={c.id}>
@@ -108,8 +110,8 @@ export default async function KartaPage({ params }: PageProps<"/oqushy/zertkhana
             </svg>
           </div>
           <ul className="mt-4 flex flex-wrap gap-4 text-xs font-bold" aria-label="Белгілер">
-            <li className="flex items-center gap-2"><span className="size-3.5 rounded border-2 border-primary bg-[#e4efff]" /> басты кейіпкер</li>
-            <li className="flex items-center gap-2"><span className="size-3.5 rounded border-2 border-[#c6d4ea] bg-white" /> қосалқы кейіпкер</li>
+            <li className="flex items-center gap-2"><span className="size-3.5 rounded border-2 border-primary bg-accent-soft" /> басты кейіпкер</li>
+            <li className="flex items-center gap-2"><span className="size-3.5 rounded border-2 border-node-line bg-surface" /> қосалқы кейіпкер</li>
             <li className="flex items-center gap-2"><span className="size-3.5 rounded border-2 border-red bg-red-soft" /> қарсы кейіпкер</li>
           </ul>
 
@@ -131,7 +133,7 @@ export default async function KartaPage({ params }: PageProps<"/oqushy/zertkhana
               <label htmlFor="evidence" className="label">Жырдан дәлел</label>
               <input id="evidence" name="evidence" required minLength={5} maxLength={300} className="field" placeholder="Мысалы: екі бай балаларын атастырады" />
             </div>
-            <button className="btn-ghost sm:col-span-2 sm:justify-self-end">Байланысты сақтау</button>
+            <Submit className="btn-ghost sm:col-span-2 sm:justify-self-end">Байланысты сақтау</Submit>
           </form>
 
           {edges.length > 0 && (
@@ -142,16 +144,16 @@ export default async function KartaPage({ params }: PageProps<"/oqushy/zertkhana
                   const label = refLabel(e);
                   return (
                     <li key={e.from + e.to} className="flex items-start gap-3 rounded-2xl border-2 border-line p-3">
-                      <span className={`mt-1 size-3 shrink-0 rounded-full ${label ? "bg-green" : "bg-[#9aa8bd]"}`} aria-hidden="true" />
+                      <span className={`mt-1 size-3 shrink-0 rounded-full ${label ? "bg-green" : "bg-muted-line"}`} aria-hidden="true" />
                       <span className="min-w-0 flex-1 text-sm">
                         <b>{byId[e.from]?.name} — {byId[e.to]?.name}</b>
                         <span className={`ml-2 font-bold ${label ? "text-green-ink" : "text-muted"}`}>{label ? `✓ ${label}` : "эталонда жоқ байланыс"}</span>
                         {e.evidence && <span className="mt-1 block text-muted">Дәлел: {e.evidence}</span>}
                       </span>
                       <form action={removeEdge.bind(null, slug, e.from, e.to)}>
-                        <button className="grid size-11 place-items-center rounded-full text-muted hover:bg-soft hover:text-ink" aria-label={`${byId[e.from]?.name} — ${byId[e.to]?.name} байланысын өшіру`}>
+                        <Submit className="grid size-11 place-items-center rounded-full text-muted hover:bg-soft hover:text-ink" aria-label={`${byId[e.from]?.name} — ${byId[e.to]?.name} байланысын өшіру`}>
                           <X className="size-4" aria-hidden="true" />
-                        </button>
+                        </Submit>
                       </form>
                     </li>
                   );
@@ -171,6 +173,8 @@ export default async function KartaPage({ params }: PageProps<"/oqushy/zertkhana
                   Мұғалім бағасы: {egerde.teacher_scores.reduce((a, b) => a + b, 0)} / 6
                 </p>
               )}
+              {eg === "ok" && <p role="status" className="mt-3 rounded-2xl bg-green-soft p-3 text-sm font-bold text-green-ink">✓ Болжамың сақталды, сыныптастарың мен мұғалім көре алады.</p>}
+              {eg === "short" && <p role="alert" className="mt-3 rounded-2xl bg-red-soft p-3 text-sm font-bold text-red-ink">Болжамды толығырақ жаз: кемінде бір сөйлем.</p>}
               <form action={saveEgerde.bind(null, slug)} className="mt-5 flex flex-col gap-4">
                 <div>
                   <label htmlFor="prediction" className="label">Менің болжамым</label>
@@ -191,7 +195,7 @@ export default async function KartaPage({ params }: PageProps<"/oqushy/zertkhana
                     ))}
                   </div>
                 </fieldset>
-                <button className="btn-primary h-14">{egerde ? "Болжамды жаңарту" : "Мұғалім мен сыныпқа жіберу"}</button>
+                <Submit className="btn-primary h-14">{egerde ? "Болжамды жаңарту" : "Мұғалім мен сыныпқа жіберу"}</Submit>
                 {egerde && <p className="text-center text-sm font-bold text-green-ink">✓ Болжамың сыныпқа жіберілді</p>}
               </form>
             </section>
@@ -207,13 +211,13 @@ export default async function KartaPage({ params }: PageProps<"/oqushy/zertkhana
                         <p className="mt-1 text-sm font-bold">{p.prediction}</p>
                       </div>
                       <form action={toggleVote.bind(null, slug, p.id)}>
-                        <button
+                        <Submit
                           aria-pressed={p.mine}
                           aria-label={`${p.full_name} болжамын қолдау, қазір ${p.votes}`}
-                          className={`num flex min-h-11 items-center gap-1.5 rounded-xl border-2 px-3 text-sm font-bold ${p.mine ? "border-primary bg-[#e4efff] text-primary" : "border-line bg-white"}`}
+                          className={`num flex min-h-11 items-center gap-1.5 rounded-xl border-2 px-3 text-sm font-bold ${p.mine ? "border-primary bg-accent-soft text-primary" : "border-line bg-surface"}`}
                         >
                           <ThumbsUp className="size-4" aria-hidden="true" /> {p.votes}
-                        </button>
+                        </Submit>
                       </form>
                     </li>
                   ))}

@@ -8,6 +8,7 @@ import { AI_MODE_LABEL } from "@/lib/ai/prompts/chat";
 import { formatAnswer, TaskFields, type DbTask } from "@/components/TaskFields";
 import { submitAssignment } from "@/app/oqushy/actions";
 import { LabHeader } from "../../zertkhana/LabHeader";
+import { Submit } from "@/components/Submit";
 
 export const metadata = { title: "Тапсырма" };
 
@@ -32,7 +33,7 @@ export default async function AssignmentPage({ params }: PageProps<"/oqushy/taps
           <ul className="grid gap-3 sm:grid-cols-2">
             {a.lab_tools.map((t) => (
               <li key={t}>
-                <Link href={toolHref(a.work_slug!, t)} className="flex min-h-16 items-center justify-between gap-3 rounded-2xl bg-soft px-5 font-bold hover:bg-[#e4efff]">
+                <Link href={toolHref(a.work_slug!, t)} className="flex min-h-16 items-center justify-between gap-3 rounded-2xl bg-soft px-5 font-bold hover:bg-accent-soft">
                   {TOOL_LABEL[t]} <span aria-hidden="true">→</span>
                 </Link>
               </li>
@@ -93,7 +94,7 @@ export default async function AssignmentPage({ params }: PageProps<"/oqushy/taps
           ))}
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5">
             <p className="text-sm text-muted">Жабық сұрақтар бірден тексеріледі, ашық жауапты мұғалім бағалайды.</p>
-            <button className="btn-primary h-14 px-10">Тапсыру</button>
+            <Submit className="btn-primary h-14 px-10">Тапсыру</Submit>
           </div>
         </form>
       )}

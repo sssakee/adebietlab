@@ -101,16 +101,17 @@ export function ChatWidget() {
         aria-expanded={open}
         aria-controls="chat-panel"
         title={off ? "Бұл тапсырмада мұғалім ЖИ көмекшісін өшірген" : undefined}
-        className="fixed bottom-4 right-4 z-30 flex items-center gap-2 rounded-full bg-white py-2 pl-2 pr-5 font-bold shadow-[0_10px_30px_-8px_rgba(16,38,74,0.35)] transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 sm:bottom-6 sm:right-6"
+        className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-3 z-30 flex items-center gap-2 rounded-full bg-surface p-2 font-bold sm:pr-5 shadow-[0_10px_30px_-8px_rgba(16,38,74,0.35)] transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 sm:right-6 lg:bottom-6"
       >
-        <span className="grid size-12 place-items-center overflow-hidden rounded-full bg-[#e4efff]">
+        <span className="grid size-12 place-items-center overflow-hidden rounded-full bg-accent-soft">
           <Image src="/mascot/kyrantay.png" alt="" width={40} height={51} />
         </span>
-        {off ? "ЖИ өшірулі" : "Сұрағың бар ма?"}
+        {/* on phones only the mascot shows, so the button covers less of the page */}
+        <span className="max-sm:sr-only">{off ? "ЖИ өшірулі" : "Сұрағың бар ма?"}</span>
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-40 bg-ink/30" onClick={() => setOpen(false)} aria-hidden="true" />
+        <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setOpen(false)} aria-hidden="true" />
       )}
       <section
         id="chat-panel"
@@ -118,7 +119,7 @@ export function ChatWidget() {
         aria-modal="true"
         aria-labelledby="chat-title"
         hidden={!open}
-        className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-white shadow-2xl sm:inset-y-3 sm:right-3 sm:rounded-[28px]"
+        className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-surface shadow-2xl sm:inset-y-3 sm:right-3 sm:rounded-[28px]"
       >
         <header className="flex items-center gap-3 border-b border-line p-4">
           <Image src="/mascot/kyrantay.png" alt="" width={44} height={56} />
@@ -147,7 +148,7 @@ export function ChatWidget() {
           {msgs.map((m, i) => (
             <p
               key={i}
-              className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-[15px] ${m.role === "user" ? "self-end bg-primary text-white" : "self-start bg-soft"}`}
+              className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-[15px] ${m.role === "user" ? "self-end bg-primary text-on-color" : "self-start bg-soft"}`}
             >
               <span className="sr-only">{m.role === "user" ? "Сен: " : "Қырантай: "}</span>
               {m.content || <span className="text-muted">Ойланып жатырмын…</span>}

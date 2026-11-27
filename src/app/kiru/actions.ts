@@ -4,6 +4,7 @@ import { z } from "zod";
 import { endSession, startSession } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { hashSecret, verifySecret } from "@/lib/password";
+import { blocked, clearFails, clientIp, LIMIT_MESSAGE, noteFail, PER_ACCOUNT, PER_IP } from "@/lib/limit";
 
 export type FormState = { error?: string; values?: Record<string, string> } | undefined;
 
@@ -14,9 +15,16 @@ const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 
 export async function teacherLogin(_: FormState, f: FormData): Promise<FormState> {
   const email = str(f, "email").toLowerCase();
+  const ip = `ip:${await clientIp()}`;
+  const acc = `teacher:${email}`;
+  if (await blocked([[acc, PER_ACCOUNT], [ip, PER_IP]])) return fail(LIMIT_MESSAGE, f, ["email"]);
   const [u] = await sql`select id, password_hash from profiles where email = ${email} and role = 'teacher'`;
   // One message for both cases: do not reveal whether the account exists.
-  if (!u || !verifySecret(str(f, "password"), u.password_hash)) return fail("Пошта немесе құпиясөз қате.", f, ["email"]);
+  if (!u || !verifySecret(str(f, "password"), u.password_hash)) {
+    await noteFail([acc, ip]);
+    return fail("Пошта немесе құпиясөз қате.", f, ["email"]);
+  }
+  await clearFails(acc);
   await startSession(u.id);
   redirect("/mugalim");
 }
@@ -47,14 +55,25 @@ export async function studentJoin(_: FormState, f: FormData): Promise<FormState>
   if (name.length < 2 || name.length > 40) return fail("Атыңды жаз.", f, ["code", "name"]);
   if (!/^\d{4}$/.test(pin)) return fail("PIN 4 цифрдан тұрады.", f, ["code", "name"]);
 
+  const ip = `ip:${await clientIp()}`;
+  const acc = `student:${code}:${name.toLowerCase()}`;
+  if (await blocked([[acc, PER_ACCOUNT], [ip, PER_IP]])) return fail(LIMIT_MESSAGE, f, ["code", "name"]);
+
   const [cls] = await sql`select id from classes where join_code = ${code}`;
-  if (!cls) return fail("Мұндай сынып коды табылмады. Мұғаліміңнен тексер.", f, ["code", "name"]);
+  if (!cls) {
+    await noteFail([ip]); // guessing class codes counts too
+    return fail("Мұндай сынып коды табылмады. Мұғаліміңнен тексер.", f, ["code", "name"]);
+  }
 
   const [existing] = await sql`select p.id, p.pin_hash from profiles p
     join class_members m on m.student_id = p.id
     where m.class_id = ${cls.id} and lower(p.full_name) = lower(${name})`;
   if (existing) {
-    if (!verifySecret(pin, existing.pin_hash)) return fail("Бұл есіммен сыныпта оқушы бар, PIN сәйкес емес.", f, ["code", "name"]);
+    if (!verifySecret(pin, existing.pin_hash)) {
+      await noteFail([acc, ip]);
+      return fail("Бұл есіммен сыныпта оқушы бар, PIN сәйкес емес.", f, ["code", "name"]);
+    }
+    await clearFails(acc);
     await startSession(existing.id);
   } else {
     const id = await sql.begin(async (tx) => {

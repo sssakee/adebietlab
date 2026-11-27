@@ -55,6 +55,12 @@ export default async function Library({ searchParams }: PageProps<"/oqushy/shyga
           </div>
           <button className="btn-primary">Сүзу</button>
         </form>
+        <p className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted" role="status">
+          Табылды: <b className="num text-ink">{works.length}</b>
+          {(q || grade || genre) && (
+            <Link href="/oqushy/shygarmalar" className="font-bold text-primary-dark underline-offset-4 hover:underline">Сүзгіні тазалау</Link>
+          )}
+        </p>
       </section>
 
       {works.length ? (
@@ -62,7 +68,7 @@ export default async function Library({ searchParams }: PageProps<"/oqushy/shyga
           {works.map((w) => (
             <li key={w.id}>
               <Link href={`/oqushy/shygarmalar/${w.slug}`} className="card flex h-full gap-4 p-5 transition-transform hover:-translate-y-0.5">
-                <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-[#e4efff] text-primary" aria-hidden="true">
+                <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-accent-soft text-primary" aria-hidden="true">
                   <BookOpen className="size-7" />
                 </span>
                 <span className="min-w-0">

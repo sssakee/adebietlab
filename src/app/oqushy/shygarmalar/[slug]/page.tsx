@@ -23,7 +23,7 @@ export default async function WorkPage({ params }: PageProps<"/oqushy/shygarmala
   return (
     <div className="flex flex-col gap-6">
       <header className="card flex items-center gap-4 py-4">
-        <Link href="/oqushy/shygarmalar" className="grid size-12 shrink-0 place-items-center rounded-2xl bg-soft hover:bg-[#e4efff]" aria-label="Кітапханаға қайту">
+        <Link href="/oqushy/shygarmalar" className="grid size-12 shrink-0 place-items-center rounded-2xl bg-soft hover:bg-accent-soft" aria-label="Кітапханаға қайту">
           <ArrowLeft className="size-5" aria-hidden="true" />
         </Link>
         <div>
@@ -69,8 +69,8 @@ export default async function WorkPage({ params }: PageProps<"/oqushy/shygarmala
             <ul className="flex flex-col gap-3">
               {tools.map((t) => (
                 <li key={t.tool}>
-                  <Link href={toolHref(w.slug, t.tool)} className="flex min-h-14 items-center gap-3 rounded-2xl bg-soft p-3 font-bold hover:bg-[#e4efff]">
-                    <span className={`grid size-10 place-items-center rounded-xl text-white ${t.color}`} aria-hidden="true">
+                  <Link href={toolHref(w.slug, t.tool)} className="flex min-h-14 items-center gap-3 rounded-2xl bg-soft p-3 font-bold hover:bg-accent-soft">
+                    <span className={`grid size-10 place-items-center rounded-xl text-on-color ${t.color}`} aria-hidden="true">
                       <t.icon className="size-5" />
                     </span>
                     {t.label}

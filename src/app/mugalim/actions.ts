@@ -39,10 +39,10 @@ export async function createClass(_: unknown, f: FormData) {
   if (!name || !(grade >= 5 && grade <= 11)) return { error: "Сынып атауы мен параллелін көрсетіңіз." };
   for (let i = 0; i < 5; i++) {
     const [c] = await sql`insert into classes (teacher_id, name, grade, join_code) values (${u.id}, ${name}, ${grade}, ${joinCode()})
-      on conflict (join_code) do nothing returning id`;
+      on conflict (join_code) do nothing returning id, join_code`;
     if (c) {
       revalidatePath("/mugalim", "layout");
-      return { error: "" };
+      return { error: "", ok: `${name} сыныбы ашылды. Оқушыларға осы кодты беріңіз: ${c.join_code}` };
     }
   }
   return { error: "Код жасалмады, қайта көріңіз." };
@@ -73,6 +73,7 @@ export async function gradeEgerde(labWorkId: string, classId: string, f: FormDat
     where l.id = ${labWorkId} and l.kind = 'egerde'
       and exists (select 1 from class_members m where m.student_id = l.student_id and m.class_id = ${classId})`;
   revalidatePath("/mugalim");
+  redirect(`/mugalim?c=${classId}&g=${labWorkId}&graded=1`);
 }
 
 // ---------- task generation ----------
